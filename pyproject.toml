@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waydroid-toolkit"
+version = "0.1.0"
+description = "Unified management suite for Waydroid"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "rich>=13.0",
+    "click>=8.1",
+    "requests>=2.31",
+    "toml>=0.10",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PyGObject>=3.44",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+wdt = "waydroid_toolkit.cli.main:cli"
+
+[project.gui-scripts]
+waydroid-toolkit = "waydroid_toolkit.gui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=waydroid_toolkit --cov-report=term-missing"
