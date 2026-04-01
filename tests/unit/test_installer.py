@@ -62,6 +62,9 @@ class TestInstallPackage:
         (Distro.FEDORA,   "dnf"),
         (Distro.ARCH,     "pacman"),
         (Distro.OPENSUSE, "zypper"),
+        (Distro.VOID,     "xbps-install"),
+        (Distro.ALPINE,   "apk"),
+        (Distro.GENTOO,   "emerge"),
     ])
     def test_uses_correct_package_manager(self, distro: Distro, expected_pm: str) -> None:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
@@ -76,6 +79,11 @@ class TestInstallPackage:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
             with pytest.raises(NotImplementedError):
                 install_package(Distro.UNKNOWN)
+
+    def test_nixos_raises_with_helpful_message(self) -> None:
+        with patch("waydroid_toolkit.modules.installer.installer.require_root"):
+            with pytest.raises(NotImplementedError, match="configuration.nix"):
+                install_package(Distro.NIXOS)
 
     def test_progress_called(self) -> None:
         messages: list[str] = []
@@ -130,6 +138,9 @@ class TestUninstallWaydroid:
         (Distro.UBUNTU,   "apt"),
         (Distro.FEDORA,   "dnf"),
         (Distro.ARCH,     "pacman"),
+        (Distro.VOID,     "xbps-remove"),
+        (Distro.ALPINE,   "apk"),
+        (Distro.GENTOO,   "emerge"),
     ])
     def test_removes_package(self, distro: Distro, expected_pm: str) -> None:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):

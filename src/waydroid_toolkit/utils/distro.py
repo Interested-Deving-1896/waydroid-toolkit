@@ -13,6 +13,10 @@ class Distro(Enum):
     FEDORA = "fedora"
     ARCH = "arch"
     OPENSUSE = "opensuse"
+    NIXOS = "nixos"
+    VOID = "void"
+    ALPINE = "alpine"
+    GENTOO = "gentoo"
     UNKNOWN = "unknown"
 
 
@@ -42,13 +46,21 @@ def detect_distro() -> Distro:
             return Distro.ARCH
         if "suse" in val or "opensuse" in val:
             return Distro.OPENSUSE
+        if "nixos" in val:
+            return Distro.NIXOS
+        if "void" in val:
+            return Distro.VOID
+        if "alpine" in val:
+            return Distro.ALPINE
+        if "gentoo" in val:
+            return Distro.GENTOO
 
     return Distro.UNKNOWN
 
 
 def get_package_manager() -> str | None:
     """Return the name of the available package manager binary."""
-    for pm in ("apt", "dnf", "pacman", "zypper", "yum"):
+    for pm in ("apt", "dnf", "pacman", "zypper", "yum", "xbps-install", "apk", "emerge"):
         if shutil.which(pm):
             return pm
     return None

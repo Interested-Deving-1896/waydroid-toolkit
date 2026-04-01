@@ -1,4 +1,4 @@
-"""Tests for GUI presenter functions.
+"""Tests for GUI presenter functions and BasePage toast helpers.
 
 Presenters gather data from the domain layer and return plain dataclasses.
 No GTK is required — these run in any environment.
@@ -262,3 +262,6 @@ class TestGetDeviceInfoData:
         with patch("waydroid_toolkit.gui.presenters.get_device_info", return_value={}):
             result = get_device_info_data()
         assert isinstance(result, dict)
+
+
+

@@ -19,6 +19,15 @@ def _mock_os_release(content: str):
     ('ID=arch\n', Distro.ARCH),
     ('ID=opensuse-tumbleweed\nID_LIKE="suse opensuse"\n', Distro.OPENSUSE),
     ('ID=linuxmint\nID_LIKE=ubuntu\n', Distro.UBUNTU),
+    # New distros
+    ('ID=nixos\n', Distro.NIXOS),
+    ('ID=void\n', Distro.VOID),
+    ('ID=alpine\n', Distro.ALPINE),
+    ('ID=gentoo\n', Distro.GENTOO),
+    # ID_LIKE fallbacks
+    ('ID=garuda\nID_LIKE=arch\n', Distro.ARCH),
+    ('ID=endeavouros\nID_LIKE="arch"\n', Distro.ARCH),
+    ('ID=pop\nID_LIKE="ubuntu debian"\n', Distro.UBUNTU),
     ('ID=unknown-distro\n', Distro.UNKNOWN),
 ])
 def test_detect_distro(content: str, expected: Distro, tmp_path: Path) -> None:

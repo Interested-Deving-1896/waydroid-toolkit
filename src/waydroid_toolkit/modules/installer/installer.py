@@ -1,7 +1,8 @@
 """Waydroid installer module.
 
 Handles detection of the host distro and installs Waydroid via the
-appropriate package manager. Covers Debian/Ubuntu, Arch, Fedora, openSUSE.
+appropriate package manager. Covers Debian/Ubuntu, Arch, Fedora, openSUSE,
+NixOS, Void, Alpine, and Gentoo.
 After package installation it runs `waydroid init` with the chosen image type.
 """
 
@@ -37,16 +38,24 @@ _REPO_SETUP: dict[Distro, list[str]] = {
     Distro.FEDORA: [
         "sudo dnf copr enable aleasto/waydroid -y",
     ],
-    Distro.ARCH: [],  # waydroid is in AUR / community
-    Distro.OPENSUSE: [],
+    Distro.ARCH: [],      # waydroid is in AUR / community
+    Distro.OPENSUSE: [],  # waydroid is in OBS
+    Distro.NIXOS: [],     # managed via nixpkgs / NixOS module
+    Distro.VOID: [],      # waydroid is in void-packages
+    Distro.ALPINE: [],    # waydroid is in Alpine community
+    Distro.GENTOO: [],    # waydroid is in ::guru overlay
 }
 
 _INSTALL_CMD: dict[Distro, list[str]] = {
-    Distro.DEBIAN: ["sudo", "apt", "install", "-y", "waydroid"],
-    Distro.UBUNTU: ["sudo", "apt", "install", "-y", "waydroid"],
-    Distro.FEDORA: ["sudo", "dnf", "install", "-y", "waydroid"],
-    Distro.ARCH: ["sudo", "pacman", "-S", "--noconfirm", "waydroid"],
+    Distro.DEBIAN:  ["sudo", "apt", "install", "-y", "waydroid"],
+    Distro.UBUNTU:  ["sudo", "apt", "install", "-y", "waydroid"],
+    Distro.FEDORA:  ["sudo", "dnf", "install", "-y", "waydroid"],
+    Distro.ARCH:    ["sudo", "pacman", "-S", "--noconfirm", "waydroid"],
     Distro.OPENSUSE: ["sudo", "zypper", "install", "-y", "waydroid"],
+    Distro.VOID:    ["sudo", "xbps-install", "-y", "waydroid"],
+    Distro.ALPINE:  ["sudo", "apk", "add", "waydroid"],
+    Distro.GENTOO:  ["sudo", "emerge", "--ask=n", "app-containers/waydroid"],
+    # NixOS: declarative only — no imperative install command
 }
 
 
@@ -66,6 +75,11 @@ def setup_repo(distro: Distro, progress: Callable[[str], None] | None = None) ->
 def install_package(distro: Distro, progress: Callable[[str], None] | None = None) -> None:
     """Install the waydroid package via the distro package manager."""
     require_root("Installing Waydroid")
+    if distro == Distro.NIXOS:
+        raise NotImplementedError(
+            "NixOS uses declarative configuration. Add 'virtualisation.waydroid.enable = true;'"
+            " to your configuration.nix and run 'nixos-rebuild switch'."
+        )
     cmd = _INSTALL_CMD.get(distro)
     if cmd is None:
         raise NotImplementedError(f"Automatic install not supported for {distro.value}")
@@ -100,11 +114,14 @@ def uninstall_waydroid(distro: Distro, progress: Callable[[str], None] | None = 
     subprocess.run(["sudo", "systemctl", "stop", "waydroid-container"], capture_output=True)
 
     remove_cmds: dict[Distro, list[str]] = {
-        Distro.DEBIAN: ["sudo", "apt", "remove", "-y", "waydroid"],
-        Distro.UBUNTU: ["sudo", "apt", "remove", "-y", "waydroid"],
-        Distro.FEDORA: ["sudo", "dnf", "remove", "-y", "waydroid"],
-        Distro.ARCH: ["sudo", "pacman", "-R", "--noconfirm", "waydroid"],
+        Distro.DEBIAN:   ["sudo", "apt", "remove", "-y", "waydroid"],
+        Distro.UBUNTU:   ["sudo", "apt", "remove", "-y", "waydroid"],
+        Distro.FEDORA:   ["sudo", "dnf", "remove", "-y", "waydroid"],
+        Distro.ARCH:     ["sudo", "pacman", "-R", "--noconfirm", "waydroid"],
         Distro.OPENSUSE: ["sudo", "zypper", "remove", "-y", "waydroid"],
+        Distro.VOID:     ["sudo", "xbps-remove", "-y", "waydroid"],
+        Distro.ALPINE:   ["sudo", "apk", "del", "waydroid"],
+        Distro.GENTOO:   ["sudo", "emerge", "--ask=n", "--unmerge", "app-containers/waydroid"],
     }
     cmd = remove_cmds.get(distro)
     if cmd:

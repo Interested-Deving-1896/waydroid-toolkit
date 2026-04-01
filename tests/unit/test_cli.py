@@ -67,6 +67,156 @@ def test_subcommand_help_maintenance() -> None:
     runner = CliRunner()
     result = runner.invoke(cli, ["maintenance", "--help"])
     assert result.exit_code == 0
+    assert "screenshot" in result.output
+    assert "logcat" in result.output
+    assert "debloat" in result.output
+
+
+# ── maintenance subcommands ───────────────────────────────────────────────────
+
+def test_maintenance_info_shows_keys() -> None:
+    runner = CliRunner()
+    info = {"android_version": "13", "sdk_version": "33",
+            "product_model": "Waydroid", "cpu_abi": "x86_64"}
+    with patch("waydroid_toolkit.cli.commands.maintenance.get_device_info", return_value=info):
+        result = runner.invoke(cli, ["maintenance", "info"])
+    assert result.exit_code == 0
+    assert "android_version" in result.output
+    assert "13" in result.output
+
+
+def test_maintenance_screenshot_default_path(tmp_path: Path) -> None:
+    dest = tmp_path / "screenshot_20240101_120000.png"
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.take_screenshot", return_value=dest):
+        result = runner.invoke(cli, ["maintenance", "screenshot"])
+    assert result.exit_code == 0
+    # Rich may wrap long paths across lines — collapse whitespace before checking
+    flat = "".join(result.output.split())
+    assert "screenshot_20240101_120000.png" in flat
+
+
+def test_maintenance_set_resolution() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.set_resolution") as mock_res:
+        result = runner.invoke(cli, ["maintenance", "set-resolution", "1920", "1080"])
+    assert result.exit_code == 0
+    mock_res.assert_called_once_with(1920, 1080)
+    assert "1920x1080" in result.output
+
+
+def test_maintenance_set_density() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.set_density") as mock_dpi:
+        result = runner.invoke(cli, ["maintenance", "set-density", "240"])
+    assert result.exit_code == 0
+    mock_dpi.assert_called_once_with(240)
+
+
+def test_maintenance_reset_display() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.reset_display") as mock_reset:
+        result = runner.invoke(cli, ["maintenance", "reset-display"])
+    assert result.exit_code == 0
+    mock_reset.assert_called_once()
+
+
+def test_maintenance_freeze() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.freeze_app") as mock_freeze:
+        result = runner.invoke(cli, ["maintenance", "freeze", "com.example.app"])
+    assert result.exit_code == 0
+    mock_freeze.assert_called_once_with("com.example.app")
+
+
+def test_maintenance_unfreeze() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.unfreeze_app") as mock_unfreeze:
+        result = runner.invoke(cli, ["maintenance", "unfreeze", "com.example.app"])
+    assert result.exit_code == 0
+    mock_unfreeze.assert_called_once_with("com.example.app")
+
+
+def test_maintenance_clear_data() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.clear_app_data") as mock_clear:
+        result = runner.invoke(cli, ["maintenance", "clear-data", "com.example.app"])
+    assert result.exit_code == 0
+    mock_clear.assert_called_once_with("com.example.app", cache_only=False)
+
+
+def test_maintenance_clear_data_cache_only() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.clear_app_data") as mock_clear:
+        result = runner.invoke(cli, ["maintenance", "clear-data",
+                                     "--cache-only", "com.example.app"])
+    assert result.exit_code == 0
+    mock_clear.assert_called_once_with("com.example.app", cache_only=True)
+
+
+def test_maintenance_push(tmp_path: Path) -> None:
+    src = tmp_path / "file.txt"
+    src.write_text("data")
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.push_file") as mock_push:
+        result = runner.invoke(cli, ["maintenance", "push", str(src), "/sdcard/file.txt"])
+    assert result.exit_code == 0
+    mock_push.assert_called_once()
+
+
+def test_maintenance_pull(tmp_path: Path) -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.pull_file") as mock_pull:
+        result = runner.invoke(cli, ["maintenance", "pull", "/sdcard/file.txt",
+                                     str(tmp_path / "out.txt")])
+    assert result.exit_code == 0
+    mock_pull.assert_called_once()
+
+
+def test_maintenance_logcat_streams_lines() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.stream_logcat",
+               return_value=iter(["line one", "line two"])):
+        result = runner.invoke(cli, ["maintenance", "logcat"])
+    assert result.exit_code == 0
+    assert "line one" in result.output
+    assert "line two" in result.output
+
+
+def test_maintenance_logcat_errors_flag() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.stream_logcat",
+               return_value=iter([])) as mock_logcat:
+        runner.invoke(cli, ["maintenance", "logcat", "--errors"])
+    mock_logcat.assert_called_once_with(tag=None, errors_only=True)
+
+
+def test_maintenance_debloat_with_yes_flag() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.debloat",
+               return_value=["com.android.email"]) as mock_debloat:
+        result = runner.invoke(cli, ["maintenance", "debloat", "--yes",
+                                     "-p", "com.android.email"])
+    assert result.exit_code == 0
+    mock_debloat.assert_called_once()
+    assert "1" in result.output
+
+
+def test_maintenance_debloat_requires_confirmation() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.debloat") as mock_debloat:
+        result = runner.invoke(cli, ["maintenance", "debloat", "-p", "com.android.email"],
+                               input="n\n")
+    assert result.exit_code != 0
+    mock_debloat.assert_not_called()
+
+
+def test_maintenance_launch() -> None:
+    runner = CliRunner()
+    with patch("waydroid_toolkit.cli.commands.maintenance.launch_app") as mock_launch:
+        result = runner.invoke(cli, ["maintenance", "launch", "com.example.app"])
+    assert result.exit_code == 0
+    mock_launch.assert_called_once_with("com.example.app")
 
 
 def test_subcommand_help_backend() -> None:

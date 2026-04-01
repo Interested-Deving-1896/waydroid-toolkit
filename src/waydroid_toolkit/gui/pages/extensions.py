@@ -74,6 +74,7 @@ class ExtensionsPage(BasePage):
             except Exception as exc:
                 msg = str(exc)
                 GLib.idle_add(lambda: row.set_subtitle(f"Error: {msg}"))
+                GLib.idle_add(lambda: self._show_error(msg))
             finally:
                 GLib.idle_add(self._refresh_states)
 
@@ -93,6 +94,7 @@ class ExtensionsPage(BasePage):
             except Exception as exc:
                 msg = str(exc)
                 GLib.idle_add(lambda: row.set_subtitle(f"Error: {msg}"))
+                GLib.idle_add(lambda: self._show_error(msg))
             finally:
                 GLib.idle_add(self._refresh_states)
 

@@ -91,6 +91,7 @@ class PerformancePage(BasePage):
             except Exception as exc:
                 msg = str(exc)
                 GLib.idle_add(lambda: self._status.set_label(f"Error: {msg}"))
+                GLib.idle_add(lambda: self._show_error(msg))
 
         threading.Thread(target=_work, daemon=True).start()
 
@@ -104,5 +105,6 @@ class PerformancePage(BasePage):
             except Exception as exc:
                 msg = str(exc)
                 GLib.idle_add(lambda: self._status.set_label(f"Error: {msg}"))
+                GLib.idle_add(lambda: self._show_error(msg))
 
         threading.Thread(target=_work, daemon=True).start()

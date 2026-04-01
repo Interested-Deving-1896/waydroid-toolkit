@@ -30,6 +30,7 @@ from waydroid_toolkit import __version__
 
 from .pages.backend import BackendPage
 from .pages.backup import BackupPage
+from .pages.base import register_toast_overlay
 from .pages.extensions import ExtensionsPage
 from .pages.images import ImagesPage
 from .pages.maintenance import MaintenancePage
@@ -86,8 +87,14 @@ class MainWindow(Adw.ApplicationWindow):
 
         # ── Content stack ─────────────────────────────────────────────────────
         self._stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+
+        # Wrap the stack in a ToastOverlay so any page can post notifications.
+        self._toast_overlay = Adw.ToastOverlay()
+        self._toast_overlay.set_child(self._stack)
+        register_toast_overlay(self._toast_overlay)
+
         content_nav = Adw.NavigationPage(title="")
-        content_nav.set_child(self._stack)
+        content_nav.set_child(self._toast_overlay)
         split.set_content(content_nav)
 
         # ── Pages ─────────────────────────────────────────────────────────────
