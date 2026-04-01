@@ -5,11 +5,18 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from waydroid_toolkit.modules.backup import DEFAULT_BACKUP_DIR, create_backup, list_backups, restore_backup
+from waydroid_toolkit.modules.backup import (
+    DEFAULT_BACKUP_DIR,
+    create_backup,
+    list_backups,
+    restore_backup,
+)
+
 from .base import BasePage
 
 
@@ -54,8 +61,9 @@ class BackupPage(BasePage):
                 archive = create_backup()
                 GLib.idle_add(lambda: self._create_status.set_label(f"Saved: {archive.name}"))
                 GLib.idle_add(self._load_backups)
-            except Exception as e:
-                GLib.idle_add(lambda: self._create_status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._create_status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()
 
@@ -95,7 +103,8 @@ class BackupPage(BasePage):
             try:
                 restore_backup(archive)
                 GLib.idle_add(lambda: self._restore_status.set_label("Restore complete."))
-            except Exception as e:
-                GLib.idle_add(lambda: self._restore_status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._restore_status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()

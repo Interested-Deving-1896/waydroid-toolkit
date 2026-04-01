@@ -7,13 +7,14 @@ Supports the upstream Magisk fork patched for Waydroid
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
-from waydroid_toolkit.core.waydroid import get_session_state, SessionState
+from waydroid_toolkit.core.waydroid import SessionState, get_session_state
 from waydroid_toolkit.utils.net import download
 from waydroid_toolkit.utils.overlay import is_overlay_enabled
+
 from .base import Extension, ExtensionMeta
 
 _MAGISK_APK_URL = (
@@ -38,7 +39,7 @@ class MagiskExtension(Extension):
     def is_installed(self) -> bool:
         return _MAGISK_MARKER.exists()
 
-    def install(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing Magisk")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled to install Magisk.")
@@ -66,7 +67,7 @@ class MagiskExtension(Extension):
         if progress:
             progress("Magisk installed. Restart Waydroid, then run 'wdt extensions magisk setup'.")
 
-    def uninstall(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def uninstall(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Uninstalling Magisk")
         if _MAGISK_MARKER.exists():
             subprocess.run(["sudo", "rm", "-rf", str(_MAGISK_MARKER)], check=True)

@@ -6,13 +6,16 @@ import threading
 from pathlib import Path
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from waydroid_toolkit.modules.packages import (
-    get_installed_packages, install_apk_url, list_repos,
+    get_installed_packages,
+    install_apk_url,
 )
+
 from .base import BasePage
 
 
@@ -28,8 +31,9 @@ class PackagesPage(BasePage):
                                     hexpand=True)
         install_row = Adw.ActionRow(title="APK source")
         install_row.add_suffix(self._url_entry)
-        install_btn = Gtk.Button(label="Install", css_classes=["suggested-action"],
-                                 valign=Gtk.Align.CENTER)
+        install_btn = Gtk.Button(
+            label="Install", css_classes=["suggested-action"], valign=Gtk.Align.CENTER,
+        )
         install_btn.connect("clicked", self._on_install)
         install_row.add_suffix(install_btn)
         install_group.add(install_row)
@@ -38,7 +42,9 @@ class PackagesPage(BasePage):
 
         # Installed packages
         pkgs_group = self.make_section("Installed Packages")
-        self._pkgs_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
+        self._pkgs_list = Gtk.ListBox(
+            css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE,
+        )
         pkgs_group.add(self._pkgs_list)
 
         refresh_btn = self.make_button("Refresh Package List")
@@ -65,8 +71,9 @@ class PackagesPage(BasePage):
                     install_apk_file(Path(source))
                 GLib.idle_add(lambda: self._install_status.set_label("Installed successfully."))
                 GLib.idle_add(self._load_packages)
-            except Exception as e:
-                GLib.idle_add(lambda: self._install_status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._install_status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()
 

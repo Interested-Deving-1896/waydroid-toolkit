@@ -4,7 +4,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from waydroid_toolkit.modules.extensions import list_all, get, ExtensionState
+from waydroid_toolkit.modules.extensions import ExtensionState, get, list_all
 
 console = Console()
 

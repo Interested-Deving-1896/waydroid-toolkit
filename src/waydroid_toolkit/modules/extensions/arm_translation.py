@@ -9,12 +9,13 @@ Sources mirror casualsnek/waydroid_script which pulls from WSA and guybrush firm
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
 from waydroid_toolkit.utils.net import download
 from waydroid_toolkit.utils.overlay import is_overlay_enabled
+
 from .base import Extension, ExtensionMeta
 
 _HOUDINI_URL = (
@@ -42,7 +43,7 @@ class LibhoudiniExtension(Extension):
     def is_installed(self) -> bool:
         return _HOUDINI_MARKER.exists()
 
-    def install(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing libhoudini")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled.")
@@ -59,7 +60,7 @@ class LibhoudiniExtension(Extension):
         if progress:
             progress("libhoudini installed. Restart Waydroid to apply.")
 
-    def uninstall(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def uninstall(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Uninstalling libhoudini")
         for path in [
             "/var/lib/waydroid/overlay/system/lib/libhoudini.so",
@@ -84,7 +85,7 @@ class LibndkExtension(Extension):
     def is_installed(self) -> bool:
         return _NDK_MARKER.exists()
 
-    def install(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing libndk")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled.")
@@ -101,7 +102,7 @@ class LibndkExtension(Extension):
         if progress:
             progress("libndk installed. Restart Waydroid to apply.")
 
-    def uninstall(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def uninstall(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Uninstalling libndk")
         for path in [
             "/var/lib/waydroid/overlay/system/lib/libndk_translation.so",

@@ -7,11 +7,9 @@ Mirrors waydroid/waydroid-package-manager (wpm) behaviour.
 from __future__ import annotations
 
 import json
-import subprocess
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
-from urllib.request import urlopen
 
 from waydroid_toolkit.core.adb import install_apk, list_packages, uninstall_package
 from waydroid_toolkit.utils.net import download
@@ -22,7 +20,7 @@ _FDROID_INDEX = "index-v1.json"
 
 def install_apk_file(
     apk: Path,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Install a local APK file via ADB."""
     if not apk.exists():
@@ -38,7 +36,7 @@ def install_apk_file(
 
 def install_apk_url(
     url: str,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Download an APK from url and install it."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -51,7 +49,7 @@ def install_apk_url(
 
 def remove_package(
     package: str,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     if progress:
         progress(f"Removing {package}...")
@@ -72,7 +70,7 @@ def _repo_path(name: str) -> Path:
     return _REPOS_DIR / name
 
 
-def add_repo(name: str, url: str, progress: Optional[Callable[[str], None]] = None) -> None:
+def add_repo(name: str, url: str, progress: Callable[[str], None] | None = None) -> None:
     """Add an F-Droid repo and download its index."""
     repo_dir = _repo_path(name)
     repo_dir.mkdir(parents=True, exist_ok=True)
@@ -97,7 +95,7 @@ def list_repos() -> list[dict]:
     return repos
 
 
-def _refresh_repo(name: str, url: str, progress: Optional[Callable[[str], None]] = None) -> None:
+def _refresh_repo(name: str, url: str, progress: Callable[[str], None] | None = None) -> None:
     index_url = url.rstrip("/") + "/" + _FDROID_INDEX
     dest = _repo_path(name) / _FDROID_INDEX
     if progress:

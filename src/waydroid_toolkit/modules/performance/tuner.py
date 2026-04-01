@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
 
@@ -53,13 +53,16 @@ def _set_zram(size_mb: int, algorithm: str) -> None:
 
     result = subprocess.run(
         ["sudo", "zramctl", "--find", "--size", f"{size_mb}M", "--algorithm", algorithm],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     if result.returncode != 0:
         raise RuntimeError(f"zramctl failed: {result.stderr}")
     zram_dev = result.stdout.strip()
     subprocess.run(["sudo", "mkswap", zram_dev], check=True, capture_output=True)
-    subprocess.run(["sudo", "swapon", "--priority", "100", zram_dev], check=True, capture_output=True)
+    subprocess.run(
+        ["sudo", "swapon", "--priority", "100", zram_dev], check=True, capture_output=True,
+    )
 
 
 def _set_cpu_governor(governor: str) -> None:
@@ -80,7 +83,7 @@ def _set_turbo(enabled: bool) -> None:
 
 def apply_profile(
     profile: PerformanceProfile = PerformanceProfile(),
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Apply the performance profile to the host system."""
     require_root("Applying performance profile")
@@ -107,7 +110,7 @@ def apply_profile(
         progress("Performance profile applied.")
 
 
-def restore_defaults(progress: Optional[Callable[[str], None]] = None) -> None:
+def restore_defaults(progress: Callable[[str], None] | None = None) -> None:
     """Restore conservative defaults (schedutil governor, disable ZRAM boost)."""
     require_root("Restoring performance defaults")
     if progress:
@@ -117,7 +120,7 @@ def restore_defaults(progress: Optional[Callable[[str], None]] = None) -> None:
         progress("Defaults restored.")
 
 
-def install_systemd_service(progress: Optional[Callable[[str], None]] = None) -> None:
+def install_systemd_service(progress: Callable[[str], None] | None = None) -> None:
     """Install a systemd service so the profile persists across reboots."""
     require_root("Installing performance systemd service")
     subprocess.run(

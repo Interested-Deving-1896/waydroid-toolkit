@@ -22,12 +22,17 @@ from __future__ import annotations
 
 import configparser
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
-from waydroid_toolkit.core.waydroid import get_session_state, run_waydroid, SessionState, WaydroidConfig
+from waydroid_toolkit.core.waydroid import (
+    SessionState,
+    WaydroidConfig,
+    get_session_state,
+    run_waydroid,
+)
 
 _IMAGES_BASE = Path.home() / "waydroid-images"
 _PROFILES_BASE = Path.home() / ".local/share/waydroid/profiles"
@@ -65,7 +70,7 @@ def scan_profiles(base: Path = _IMAGES_BASE) -> list[ImageProfile]:
     return profiles
 
 
-def get_active_profile() -> Optional[str]:
+def get_active_profile() -> str | None:
     """Return the images_path from waydroid.cfg, or None if not set."""
     cfg = WaydroidConfig.load()
     return cfg.images_path or None
@@ -110,7 +115,7 @@ def _link_profile_data(profile_name: str) -> None:
 
 def switch_profile(
     profile: ImageProfile,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Switch Waydroid to the given image profile."""
     require_root("Switching image profile")

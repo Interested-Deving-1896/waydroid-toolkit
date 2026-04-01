@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
-from urllib.request import urlopen, Request
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 
 def download(
     url: str,
     dest: Path,
-    progress: Optional[Callable[[int, int], None]] = None,
+    progress: Callable[[int, int], None] | None = None,
     chunk_size: int = 65536,
 ) -> Path:
     """Download url to dest, calling progress(bytes_done, total_bytes) each chunk."""

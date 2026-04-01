@@ -4,9 +4,14 @@ import click
 from rich.console import Console
 
 from waydroid_toolkit.modules.installer.installer import (
-    ImageArch, ImageType, init_waydroid, install_package, is_waydroid_installed, setup_repo,
+    ImageArch,
+    ImageType,
+    init_waydroid,
+    install_package,
+    is_waydroid_installed,
+    setup_repo,
 )
-from waydroid_toolkit.utils.distro import detect_distro, Distro
+from waydroid_toolkit.utils.distro import Distro, detect_distro
 
 console = Console()
 

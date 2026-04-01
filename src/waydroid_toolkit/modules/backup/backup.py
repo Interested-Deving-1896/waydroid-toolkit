@@ -13,12 +13,11 @@ from __future__ import annotations
 
 import datetime
 import subprocess
-import tarfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
-from waydroid_toolkit.core.waydroid import get_session_state, run_waydroid, SessionState
+from waydroid_toolkit.core.waydroid import SessionState, get_session_state, run_waydroid
 
 _USER_DATA = Path.home() / ".local/share/waydroid"
 _VAR_DATA = Path("/var/lib/waydroid")
@@ -38,7 +37,7 @@ def _stop_session() -> bool:
 
 def create_backup(
     dest_dir: Path = DEFAULT_BACKUP_DIR,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> Path:
     """Create a compressed backup archive. Returns the path to the archive."""
     require_root("Creating Waydroid backup")
@@ -79,7 +78,7 @@ def list_backups(backup_dir: Path = DEFAULT_BACKUP_DIR) -> list[Path]:
 
 def restore_backup(
     archive: Path,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Restore Waydroid data from a backup archive."""
     require_root("Restoring Waydroid backup")

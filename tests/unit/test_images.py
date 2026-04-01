@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from waydroid_toolkit.modules.images.manager import ImageProfile, scan_profiles
 
 

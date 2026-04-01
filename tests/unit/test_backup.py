@@ -1,9 +1,6 @@
 """Tests for the backup module."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from waydroid_toolkit.modules.backup.backup import list_backups
 

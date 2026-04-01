@@ -7,9 +7,9 @@ implements this interface. The extension engine discovers and runs them uniforml
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Optional
 
 
 class ExtensionState(Enum):
@@ -41,11 +41,11 @@ class Extension(ABC):
         ...
 
     @abstractmethod
-    def install(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def install(self, progress: Callable[[str], None] | None = None) -> None:
         ...
 
     @abstractmethod
-    def uninstall(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def uninstall(self, progress: Callable[[str], None] | None = None) -> None:
         ...
 
     def state(self) -> ExtensionState:

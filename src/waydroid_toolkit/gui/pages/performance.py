@@ -5,11 +5,13 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from waydroid_toolkit.modules.performance import PerformanceProfile, apply_profile, restore_defaults
+
 from .base import BasePage
 
 
@@ -86,8 +88,9 @@ class PerformancePage(BasePage):
             try:
                 apply_profile(profile)
                 GLib.idle_add(lambda: self._status.set_label("Profile applied."))
-            except Exception as e:
-                GLib.idle_add(lambda: self._status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()
 
@@ -98,7 +101,8 @@ class PerformancePage(BasePage):
             try:
                 restore_defaults()
                 GLib.idle_add(lambda: self._status.set_label("Defaults restored."))
-            except Exception as e:
-                GLib.idle_add(lambda: self._status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()

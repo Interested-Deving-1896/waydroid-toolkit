@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from waydroid_toolkit.utils.overlay import overlay_path, install_file, remove_file
+from waydroid_toolkit.utils.overlay import install_file, overlay_path, remove_file
 
 
 def test_overlay_path_strips_leading_slash() -> None:

@@ -11,7 +11,6 @@ import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 _CFG_PATH = Path("/var/lib/waydroid/waydroid.cfg")
 _USER_DATA = Path.home() / ".local/share/waydroid"
@@ -31,7 +30,7 @@ class WaydroidConfig:
     extra: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def load(cls) -> "WaydroidConfig":
+    def load(cls) -> WaydroidConfig:
         if not _CFG_PATH.exists():
             return cls()
         parser = configparser.ConfigParser()
@@ -61,7 +60,9 @@ def get_session_state() -> SessionState:
         return SessionState.UNKNOWN
 
 
-def run_waydroid(*args: str, sudo: bool = False, timeout: int = 60) -> subprocess.CompletedProcess[str]:
+def run_waydroid(
+    *args: str, sudo: bool = False, timeout: int = 60
+) -> subprocess.CompletedProcess[str]:
     """Run a waydroid subcommand, optionally with sudo."""
     cmd = (["sudo"] if sudo else []) + ["waydroid", *args]
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -95,7 +96,7 @@ def is_initialized() -> bool:
     return (images / "system.img").exists() and (images / "vendor.img").exists()
 
 
-def get_android_id() -> Optional[str]:
+def get_android_id() -> str | None:
     """Retrieve the Android device ID needed for GApps registration."""
     result = shell(
         'ANDROID_RUNTIME_ROOT=/apex/com.android.runtime sqlite3 '

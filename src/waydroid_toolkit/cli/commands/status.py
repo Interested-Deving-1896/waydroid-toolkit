@@ -4,10 +4,15 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from waydroid_toolkit.core.adb import is_available as adb_available
+from waydroid_toolkit.core.adb import is_connected as adb_connected
 from waydroid_toolkit.core.waydroid import (
-    WaydroidConfig, get_session_state, is_initialized, is_installed, SessionState,
+    SessionState,
+    WaydroidConfig,
+    get_session_state,
+    is_initialized,
+    is_installed,
 )
-from waydroid_toolkit.core.adb import is_available as adb_available, is_connected as adb_connected
 
 console = Console()
 

@@ -7,15 +7,13 @@ After package installation it runs `waydroid init` with the chosen image type.
 
 from __future__ import annotations
 
-import platform
 import shutil
 import subprocess
+from collections.abc import Callable
 from enum import Enum
-from pathlib import Path
-from typing import Callable, Optional
 
-from waydroid_toolkit.core.privilege import require_root, sudo_run
-from waydroid_toolkit.utils.distro import detect_distro, Distro
+from waydroid_toolkit.core.privilege import require_root
+from waydroid_toolkit.utils.distro import Distro
 
 
 class ImageType(Enum):
@@ -56,7 +54,7 @@ def is_waydroid_installed() -> bool:
     return shutil.which("waydroid") is not None
 
 
-def setup_repo(distro: Distro, progress: Optional[Callable[[str], None]] = None) -> None:
+def setup_repo(distro: Distro, progress: Callable[[str], None] | None = None) -> None:
     """Add the Waydroid package repository for the given distro."""
     cmds = _REPO_SETUP.get(distro, [])
     for cmd in cmds:
@@ -65,7 +63,7 @@ def setup_repo(distro: Distro, progress: Optional[Callable[[str], None]] = None)
         subprocess.run(cmd, shell=True, check=True)
 
 
-def install_package(distro: Distro, progress: Optional[Callable[[str], None]] = None) -> None:
+def install_package(distro: Distro, progress: Callable[[str], None] | None = None) -> None:
     """Install the waydroid package via the distro package manager."""
     require_root("Installing Waydroid")
     cmd = _INSTALL_CMD.get(distro)
@@ -79,7 +77,7 @@ def install_package(distro: Distro, progress: Optional[Callable[[str], None]] = 
 def init_waydroid(
     image_type: ImageType = ImageType.VANILLA,
     arch: ImageArch = ImageArch.X86_64,
-    progress: Optional[Callable[[str], None]] = None,
+    progress: Callable[[str], None] | None = None,
 ) -> None:
     """Initialise Waydroid with the chosen image type and architecture."""
     require_root("Initialising Waydroid")
@@ -93,7 +91,7 @@ def init_waydroid(
     subprocess.run(cmd, check=True)
 
 
-def uninstall_waydroid(distro: Distro, progress: Optional[Callable[[str], None]] = None) -> None:
+def uninstall_waydroid(distro: Distro, progress: Callable[[str], None] | None = None) -> None:
     """Stop Waydroid, remove the package, and optionally purge data."""
     require_root("Uninstalling Waydroid")
     if progress:

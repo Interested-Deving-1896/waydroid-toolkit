@@ -9,13 +9,11 @@ Consolidates functionality from:
 from __future__ import annotations
 
 import datetime
-import subprocess
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Callable, Iterator, Optional
 
 from waydroid_toolkit.core import adb
 from waydroid_toolkit.core.waydroid import run_waydroid
-
 
 # ── Display settings ─────────────────────────────────────────────────────────
 
@@ -54,12 +52,12 @@ def get_device_info() -> dict[str, str]:
 
 # ── Screenshot / screen record ────────────────────────────────────────────────
 
-def take_screenshot(dest: Optional[Path] = None) -> Path:
+def take_screenshot(dest: Path | None = None) -> Path:
     return adb.screenshot(dest)
 
 
 def record_screen(
-    dest: Optional[Path] = None,
+    dest: Path | None = None,
     duration_seconds: int = 60,
 ) -> Path:
     if dest is None:
@@ -90,7 +88,7 @@ def pull_file(android_src: str, local: Path) -> None:
 # ── Logcat ────────────────────────────────────────────────────────────────────
 
 def stream_logcat(
-    tag: Optional[str] = None,
+    tag: str | None = None,
     errors_only: bool = False,
 ) -> Iterator[str]:
     """Yield logcat lines as a generator. Caller is responsible for stopping."""
@@ -141,8 +139,8 @@ DEFAULT_BLOAT = [
 
 
 def debloat(
-    packages: Optional[list[str]] = None,
-    progress: Optional[Callable[[str], None]] = None,
+    packages: list[str] | None = None,
+    progress: Callable[[str], None] | None = None,
 ) -> list[str]:
     """Uninstall bloatware packages. Returns list of successfully removed packages."""
     targets = packages or DEFAULT_BLOAT

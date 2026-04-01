@@ -4,7 +4,10 @@ import click
 from rich.console import Console
 
 from waydroid_toolkit.modules.performance import (
-    PerformanceProfile, apply_profile, install_systemd_service, restore_defaults,
+    PerformanceProfile,
+    apply_profile,
+    install_systemd_service,
+    restore_defaults,
 )
 
 console = Console()

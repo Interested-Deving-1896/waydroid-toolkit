@@ -6,10 +6,20 @@ import click
 from rich.console import Console
 
 from waydroid_toolkit.modules.maintenance import (
-    clear_app_data, debloat, freeze_app, get_device_info,
-    launch_app, pull_file, push_file, record_screen,
-    reset_display, set_density, set_resolution, stream_logcat,
-    take_screenshot, unfreeze_app,
+    clear_app_data,
+    debloat,
+    freeze_app,
+    get_device_info,
+    launch_app,
+    pull_file,
+    push_file,
+    record_screen,
+    reset_display,
+    set_density,
+    set_resolution,
+    stream_logcat,
+    take_screenshot,
+    unfreeze_app,
 )
 
 console = Console()
@@ -68,7 +78,8 @@ def cmd_screenshot(dest: str | None) -> None:
 
 @cmd.command("record")
 @click.option("--dest", default=None, help="Output file path.")
-@click.option("--duration", default=60, show_default=True, help="Max recording duration in seconds.")
+@click.option("--duration", default=60, show_default=True,
+              help="Max recording duration in seconds.")
 def cmd_record(dest: str | None, duration: int) -> None:
     """Record the Waydroid screen."""
     path = record_screen(Path(dest) if dest else None, duration_seconds=duration)

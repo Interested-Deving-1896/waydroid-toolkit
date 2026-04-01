@@ -7,8 +7,14 @@ from rich.console import Console
 from rich.table import Table
 
 from waydroid_toolkit.modules.packages import (
-    add_repo, get_installed_packages, install_apk_file,
-    install_apk_url, list_repos, remove_package, remove_repo, search_repos,
+    add_repo,
+    get_installed_packages,
+    install_apk_file,
+    install_apk_url,
+    list_repos,
+    remove_package,
+    remove_repo,
+    search_repos,
 )
 
 console = Console()
@@ -23,7 +29,9 @@ def cmd() -> None:
 @click.argument("source")
 def install_pkg(source: str) -> None:
     """Install an APK from a local file path or URL."""
-    progress = lambda msg: console.print(f"  [cyan]→[/cyan] {msg}")
+    def progress(msg: str) -> None:
+        console.print(f"  [cyan]→[/cyan] {msg}")
+
     if source.startswith("http://") or source.startswith("https://"):
         install_apk_url(source, progress)
     else:

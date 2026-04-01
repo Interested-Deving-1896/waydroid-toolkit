@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from waydroid_toolkit.core.privilege import require_root
 from waydroid_toolkit.utils.net import download
 from waydroid_toolkit.utils.overlay import is_overlay_enabled
+
 from .base import Extension, ExtensionMeta
 
 _MICROG_URL = "https://github.com/casualsnek/waydroid_script/raw/main/stuff/microg.zip"
@@ -32,7 +33,7 @@ class MicroGExtension(Extension):
     def is_installed(self) -> bool:
         return _MICROG_MARKER.exists()
 
-    def install(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing microG")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled.")
@@ -49,7 +50,7 @@ class MicroGExtension(Extension):
         if progress:
             progress("microG installed. Restart Waydroid to apply.")
 
-    def uninstall(self, progress: Optional[Callable[[str], None]] = None) -> None:
+    def uninstall(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Uninstalling microG")
         subprocess.run(["sudo", "rm", "-rf", str(_MICROG_MARKER)], capture_output=True)
         if progress:

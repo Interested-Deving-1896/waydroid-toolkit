@@ -5,11 +5,13 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from waydroid_toolkit.modules.images import get_active_profile, scan_profiles, switch_profile
+
 from .base import BasePage
 
 
@@ -48,14 +50,16 @@ class ImagesPage(BasePage):
 
                 if not profiles:
                     self._status_label.set_label(
-                        "No profiles found. Place system.img + vendor.img pairs under ~/waydroid-images/."
+                        "No profiles found. Place system.img + vendor.img pairs"
+                        " under ~/waydroid-images/."
                     )
                     return
 
                 self._status_label.set_label(f"{len(profiles)} profile(s) found.")
                 for p in profiles:
                     is_active = active and str(p.path) in active
-                    subtitle = str(p.path) + (" (active)" if is_active else "")
+                    active_tag = " (active)" if is_active else ""
+                    subtitle = str(p.path) + active_tag
                     row = Adw.ActionRow(title=p.name, subtitle=subtitle)
                     if not is_active:
                         btn = Gtk.Button(label="Switch", css_classes=["suggested-action"],
@@ -75,7 +79,8 @@ class ImagesPage(BasePage):
             try:
                 switch_profile(profile)  # type: ignore[arg-type]
                 GLib.idle_add(self._load_profiles)
-            except Exception as e:
-                GLib.idle_add(lambda: self._status_label.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._status_label.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()

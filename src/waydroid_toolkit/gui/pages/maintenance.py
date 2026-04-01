@@ -5,13 +5,19 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from waydroid_toolkit.modules.maintenance import (
-    get_device_info, reset_display, set_density, set_resolution, take_screenshot,
+    get_device_info,
+    reset_display,
+    set_density,
+    set_resolution,
+    take_screenshot,
 )
+
 from .base import BasePage
 
 
@@ -24,7 +30,10 @@ class MaintenancePage(BasePage):
         # ── Device info ───────────────────────────────────────────────────────
         info_group = self.make_section("Device Info")
         self._info_rows: dict[str, Adw.ActionRow] = {}
-        for key in ("android_version", "sdk_version", "product_model", "cpu_abi", "display", "density"):
+        info_keys = (
+            "android_version", "sdk_version", "product_model", "cpu_abi", "display", "density",
+        )
+        for key in info_keys:
             row = Adw.ActionRow(title=key.replace("_", " ").title(), subtitle="—")
             info_group.add(row)
             self._info_rows[key] = row
@@ -36,10 +45,12 @@ class MaintenancePage(BasePage):
         display_group = self.make_section("Display Settings")
 
         res_row = Adw.ActionRow(title="Resolution", subtitle="Width × Height")
-        self._width_entry = Gtk.Entry(placeholder_text="1280", max_width_chars=6,
-                                      valign=Gtk.Align.CENTER)
-        self._height_entry = Gtk.Entry(placeholder_text="720", max_width_chars=6,
-                                       valign=Gtk.Align.CENTER)
+        self._width_entry = Gtk.Entry(
+            placeholder_text="1280", max_width_chars=6, valign=Gtk.Align.CENTER,
+        )
+        self._height_entry = Gtk.Entry(
+            placeholder_text="720", max_width_chars=6, valign=Gtk.Align.CENTER,
+        )
         res_row.add_suffix(self._width_entry)
         res_row.add_suffix(Gtk.Label(label="×", valign=Gtk.Align.CENTER))
         res_row.add_suffix(self._height_entry)
@@ -113,7 +124,8 @@ class MaintenancePage(BasePage):
             try:
                 path = take_screenshot()
                 GLib.idle_add(lambda: self._screenshot_status.set_label(f"Saved: {path}"))
-            except Exception as e:
-                GLib.idle_add(lambda: self._screenshot_status.set_label(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: self._screenshot_status.set_label(f"Error: {msg}"))
 
         threading.Thread(target=_work, daemon=True).start()

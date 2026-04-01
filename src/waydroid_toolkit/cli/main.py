@@ -18,7 +18,17 @@ import click
 from rich.console import Console
 
 from waydroid_toolkit import __version__
-from .commands import backup, extensions, images, install, maintenance, packages, performance, status
+
+from .commands import (
+    backup,
+    extensions,
+    images,
+    install,
+    maintenance,
+    packages,
+    performance,
+    status,
+)
 
 console = Console()
 

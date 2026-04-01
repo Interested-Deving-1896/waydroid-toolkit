@@ -1,10 +1,7 @@
 """Tests for network download helpers."""
 
-from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from waydroid_toolkit.utils.net import download, verify_sha256
 

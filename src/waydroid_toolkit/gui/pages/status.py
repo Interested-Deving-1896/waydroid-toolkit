@@ -5,14 +5,21 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, GLib
 
+from waydroid_toolkit.core.adb import is_available as adb_available
+from waydroid_toolkit.core.adb import is_connected as adb_connected
 from waydroid_toolkit.core.waydroid import (
-    WaydroidConfig, get_session_state, is_initialized, is_installed, SessionState,
+    SessionState,
+    WaydroidConfig,
+    get_session_state,
+    is_initialized,
+    is_installed,
 )
-from waydroid_toolkit.core.adb import is_available as adb_available, is_connected as adb_connected
+
 from .base import BasePage
 
 

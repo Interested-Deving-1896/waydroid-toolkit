@@ -16,7 +16,7 @@ try:
     import gi
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
-    from gi.repository import Adw, Gio, GLib, Gtk
+    from gi.repository import Adw, Gio, Gtk
 except (ImportError, ValueError) as exc:
     print(
         f"GUI dependencies not available: {exc}\n"
@@ -27,13 +27,14 @@ except (ImportError, ValueError) as exc:
     sys.exit(1)
 
 from waydroid_toolkit import __version__
-from .pages.status import StatusPage
+
+from .pages.backup import BackupPage
 from .pages.extensions import ExtensionsPage
 from .pages.images import ImagesPage
-from .pages.packages import PackagesPage
-from .pages.backup import BackupPage
-from .pages.performance import PerformancePage
 from .pages.maintenance import MaintenancePage
+from .pages.packages import PackagesPage
+from .pages.performance import PerformancePage
+from .pages.status import StatusPage
 
 
 class WayDroidToolkitApp(Adw.Application):

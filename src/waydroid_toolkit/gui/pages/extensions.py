@@ -5,11 +5,13 @@ from __future__ import annotations
 import threading
 
 import gi
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from waydroid_toolkit.modules.extensions import list_all, ExtensionState
+from waydroid_toolkit.modules.extensions import ExtensionState, list_all
+
 from .base import BasePage
 
 
@@ -67,8 +69,9 @@ class ExtensionsPage(BasePage):
             try:
                 ext.install()
                 GLib.idle_add(lambda: row.set_subtitle("Installed. Restart Waydroid to apply."))
-            except Exception as e:
-                GLib.idle_add(lambda: row.set_subtitle(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: row.set_subtitle(f"Error: {msg}"))
             finally:
                 GLib.idle_add(self._refresh_states)
 
@@ -85,8 +88,9 @@ class ExtensionsPage(BasePage):
             try:
                 ext.uninstall()
                 GLib.idle_add(lambda: row.set_subtitle(ext.meta.description))
-            except Exception as e:
-                GLib.idle_add(lambda: row.set_subtitle(f"Error: {e}"))
+            except Exception as exc:
+                msg = str(exc)
+                GLib.idle_add(lambda: row.set_subtitle(f"Error: {msg}"))
             finally:
                 GLib.idle_add(self._refresh_states)
 

@@ -6,7 +6,10 @@ import click
 from rich.console import Console
 
 from waydroid_toolkit.modules.backup import (
-    DEFAULT_BACKUP_DIR, create_backup, list_backups, restore_backup,
+    DEFAULT_BACKUP_DIR,
+    create_backup,
+    list_backups,
+    restore_backup,
 )
 
 console = Console()

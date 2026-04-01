@@ -4,7 +4,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from waydroid_toolkit.core.waydroid import SessionState, WaydroidConfig, get_session_state, is_installed
+from waydroid_toolkit.core.waydroid import (
+    SessionState,
+    WaydroidConfig,
+    get_session_state,
+    is_installed,
+)
 
 
 def test_is_installed_true() -> None:

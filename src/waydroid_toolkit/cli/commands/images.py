@@ -15,7 +15,7 @@ def cmd() -> None:
 
 
 @cmd.command("list")
-@click.option("--base", default=None, help="Directory to scan for profiles (default: ~/waydroid-images).")
+@click.option("--base", default=None, help="Directory to scan for profiles (default: ~/waydroid-images).")  # noqa: E501
 def list_images(base: str | None) -> None:
     """List available image profiles."""
     from pathlib import Path

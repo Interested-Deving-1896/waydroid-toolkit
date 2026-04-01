@@ -10,7 +10,6 @@ from __future__ import annotations
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
 
 _WAYDROID_ADB_HOST = "192.168.250.1"
 _WAYDROID_ADB_PORT = 5555
@@ -88,7 +87,7 @@ def pull(remote: str, local: Path, timeout: int = 60) -> subprocess.CompletedPro
     return _adb("pull", remote, str(local), timeout=timeout)
 
 
-def screenshot(dest: Optional[Path] = None) -> Path:
+def screenshot(dest: Path | None = None) -> Path:
     """Capture a screenshot and save it to dest (default: ~/Pictures/Waydroid/)."""
     if dest is None:
         pictures = Path.home() / "Pictures" / "Waydroid"
@@ -105,7 +104,7 @@ def screenshot(dest: Optional[Path] = None) -> Path:
     return dest
 
 
-def logcat(tag: Optional[str] = None, errors_only: bool = False) -> subprocess.Popen[str]:
+def logcat(tag: str | None = None, errors_only: bool = False) -> subprocess.Popen[str]:
     """Return a Popen handle streaming logcat output."""
     args = ["adb", "-s", _ADB_TARGET, "logcat"]
     if errors_only:
