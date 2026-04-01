@@ -105,14 +105,7 @@ jobs:
       - name: Install TypeScript
         run: npm install -g typescript
 
-      - name: Verify android-shared.ts compiles
+      - name: Type-check shared/ (android-shared.ts + manifest-writer.ts)
         run: |
           cd vendor/penguins-eggs/shared
-          tsc --noEmit --strict --target ES2022 --moduleResolution node \
-            android-shared.ts
-
-      - name: Verify manifest-writer.ts compiles
-        run: |
-          cd vendor/penguins-eggs/shared
-          tsc --noEmit --strict --target ES2022 --moduleResolution node \
-            --esModuleInterop manifest-writer.ts android-shared.ts
+          tsc --project tsconfig.json
