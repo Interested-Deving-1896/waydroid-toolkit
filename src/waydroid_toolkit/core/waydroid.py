@@ -1,6 +1,8 @@
 """Low-level interface to the Waydroid runtime.
 
 Wraps the waydroid CLI and reads /var/lib/waydroid/waydroid.cfg.
+Container lifecycle queries (state, exec) are routed through the active
+ContainerBackend so that LXC and Incus are interchangeable.
 All other modules go through this layer rather than shelling out directly.
 """
 
@@ -44,7 +46,29 @@ class WaydroidConfig:
 
 
 def get_session_state() -> SessionState:
-    """Return the current Waydroid session state."""
+    """Return the current Waydroid session state.
+
+    Queries the active container backend first (backend-agnostic). Falls
+    back to parsing `waydroid status` output if the backend is unavailable.
+    """
+    # Lazy import avoids a circular dependency at module load time.
+    from waydroid_toolkit.core.container import ContainerState
+    from waydroid_toolkit.core.container import get_active as _get_backend
+
+    try:
+        backend = _get_backend()
+        state = backend.get_state()
+        _map = {
+            ContainerState.RUNNING: SessionState.RUNNING,
+            ContainerState.STOPPED: SessionState.STOPPED,
+            ContainerState.FROZEN: SessionState.STOPPED,
+            ContainerState.UNKNOWN: SessionState.UNKNOWN,
+        }
+        return _map[state]
+    except Exception:
+        pass
+
+    # Fallback: parse waydroid CLI output directly
     try:
         result = subprocess.run(
             ["waydroid", "status"],
@@ -69,7 +93,21 @@ def run_waydroid(
 
 
 def shell(command: str, timeout: int = 30) -> subprocess.CompletedProcess[str]:
-    """Execute a command inside the Waydroid Android shell via waydroid shell."""
+    """Execute a command inside the Waydroid Android shell.
+
+    Routes through the active container backend so the call works
+    identically whether LXC or Incus is in use.
+    Falls back to `waydroid shell` if the backend is unavailable.
+    """
+    from waydroid_toolkit.core.container import get_active as _get_backend
+
+    try:
+        backend = _get_backend()
+        return backend.execute(command.split(), timeout=timeout)
+    except Exception:
+        pass
+
+    # Fallback: use the waydroid CLI directly
     return subprocess.run(
         ["sudo", "waydroid", "shell", command],
         capture_output=True,

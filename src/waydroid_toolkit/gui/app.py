@@ -28,6 +28,7 @@ except (ImportError, ValueError) as exc:
 
 from waydroid_toolkit import __version__
 
+from .pages.backend import BackendPage
 from .pages.backup import BackupPage
 from .pages.extensions import ExtensionsPage
 from .pages.images import ImagesPage
@@ -92,6 +93,7 @@ class MainWindow(Adw.ApplicationWindow):
         # ── Pages ─────────────────────────────────────────────────────────────
         self._pages: list[tuple[str, str, Gtk.Widget]] = [
             ("status",      "Status",       StatusPage()),
+            ("backend",     "Backend",      BackendPage()),
             ("extensions",  "Extensions",   ExtensionsPage()),
             ("images",      "Images",       ImagesPage()),
             ("packages",    "Packages",     PackagesPage()),

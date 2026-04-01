@@ -6,6 +6,7 @@ Usage:
 Commands:
     status        Show Waydroid runtime status
     install       Install Waydroid on this system
+    backend       Select and inspect the container backend (LXC or Incus)
     extensions    Manage extensions (GApps, Magisk, ARM translation, microG)
     images        Manage image profiles
     packages      Install/remove Android apps and manage F-Droid repos
@@ -20,6 +21,7 @@ from rich.console import Console
 from waydroid_toolkit import __version__
 
 from .commands import (
+    backend,
     backup,
     extensions,
     images,
@@ -43,6 +45,7 @@ def cli() -> None:
 
 cli.add_command(status.cmd, name="status")
 cli.add_command(install.cmd, name="install")
+cli.add_command(backend.cmd, name="backend")
 cli.add_command(extensions.cmd, name="extensions")
 cli.add_command(images.cmd, name="images")
 cli.add_command(packages.cmd, name="packages")
