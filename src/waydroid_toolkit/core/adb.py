@@ -35,8 +35,18 @@ def is_available() -> bool:
 
 
 def connect(retries: int = 3, delay: float = 1.5) -> bool:
-    """Connect to the Waydroid ADB endpoint. Returns True on success."""
+    """Connect to the Waydroid ADB endpoint. Returns True on success.
+
+    Checks that Waydroid is running before each attempt so retries are
+    not wasted when the container is stopped.
+    """
+    # Lazy import avoids a circular dependency at module load time.
+    from waydroid_toolkit.core.waydroid import SessionState, get_session_state
+
     for _ in range(retries):
+        if get_session_state() != SessionState.RUNNING:
+            time.sleep(delay)
+            continue
         result = subprocess.run(
             ["adb", "connect", _ADB_TARGET],
             capture_output=True,
