@@ -102,10 +102,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install TypeScript and Node type definitions
-        run: npm install -g typescript @types/node
+      - name: Install shared/ dev dependencies
+        run: |
+          cd vendor/penguins-eggs/shared
+          npm install
 
       - name: Type-check shared/ (android-shared.ts + manifest-writer.ts)
         run: |
           cd vendor/penguins-eggs/shared
-          tsc --project tsconfig.json
+          npx tsc --project tsconfig.json
