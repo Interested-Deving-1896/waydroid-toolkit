@@ -1,5 +1,6 @@
 """Shared utilities — distro detection, networking, overlay helpers."""
 
+from .android_shared import AndroidShared
 from .distro import Distro, detect_distro, get_package_manager
 from .github_releases import download_latest_apk as gh_download_apk
 from .github_releases import latest_apk_url as gh_latest_apk_url
@@ -9,6 +10,7 @@ from .net import download, verify_sha256
 from .overlay import install_file, is_overlay_enabled, overlay_path, remove_file
 
 __all__ = [
+    "AndroidShared",
     "Distro",
     "detect_distro",
     "get_package_manager",

@@ -1,0 +1,1 @@
+"""Android image builder — delegates to penguins-eggs CLI."""

@@ -52,3 +52,7 @@
 [submodule "vendor/GitHub-Store"]
 	path = vendor/GitHub-Store
 	url = https://github.com/OpenHub-Store/GitHub-Store
+[submodule "vendor/penguins-eggs"]
+	path = vendor/penguins-eggs
+	url = https://github.com/Interested-Deving-1896/penguins-eggs
+	branch = all-features

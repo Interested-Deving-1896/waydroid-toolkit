@@ -6,6 +6,7 @@ Usage:
 Commands:
     status        Show Waydroid runtime status
     install       Install Waydroid on this system
+    build         Build an Android image via penguins-eggs
     backend       Select and inspect the container backend (LXC or Incus)
     extensions    Manage extensions (GApps, Magisk, ARM translation, microG)
     images        Manage image profiles
@@ -23,6 +24,7 @@ from waydroid_toolkit import __version__
 from .commands import (
     backend,
     backup,
+    build,
     extensions,
     images,
     install,
@@ -45,6 +47,7 @@ def cli() -> None:
 
 cli.add_command(status.cmd, name="status")
 cli.add_command(install.cmd, name="install")
+cli.add_command(build.cmd, name="build")
 cli.add_command(backend.cmd, name="backend")
 cli.add_command(extensions.cmd, name="extensions")
 cli.add_command(images.cmd, name="images")
