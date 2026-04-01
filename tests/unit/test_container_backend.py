@@ -12,11 +12,13 @@ import pytest
 from waydroid_toolkit.core.container import BackendType, ContainerState
 from waydroid_toolkit.core.container.incus_backend import (
     ANDROID_ENV,
+    AudioBackend,
     IncusBackend,
     SessionConfig,
     _glob_char_devices,
     _static_char_devices,
     _static_disk_mounts,
+    detect_audio_backend,
 )
 from waydroid_toolkit.core.container.lxc_backend import LxcBackend
 from waydroid_toolkit.core.container.selector import detect, get_active, set_active
@@ -82,6 +84,65 @@ class TestDeviceDescriptors:
     def test_static_disk_mounts_includes_wslg(self) -> None:
         names = [m.name for m in _static_disk_mounts()]
         assert "wslg" in names
+
+
+# ── AudioBackend detection ────────────────────────────────────────────────────
+
+
+class TestAudioBackend:
+    def test_detect_returns_pipewire_when_socket_exists(self, tmp_path: Path) -> None:
+        (tmp_path / "pipewire-0").touch()
+        assert detect_audio_backend(str(tmp_path)) == AudioBackend.PIPEWIRE
+
+    def test_detect_returns_pulseaudio_when_no_pipewire_socket(self, tmp_path: Path) -> None:
+        assert detect_audio_backend(str(tmp_path)) == AudioBackend.PULSEAUDIO
+
+    def test_detect_ignores_pulse_socket_for_detection(self, tmp_path: Path) -> None:
+        # pulse/native present but pipewire-0 absent → still PULSEAUDIO
+        (tmp_path / "pulse").mkdir()
+        (tmp_path / "pulse" / "native").touch()
+        assert detect_audio_backend(str(tmp_path)) == AudioBackend.PULSEAUDIO
+
+
+class TestSessionConfigDetect:
+    def test_detect_auto_picks_pipewire(self, tmp_path: Path) -> None:
+        (tmp_path / "pipewire-0").touch()
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/data", audio=AudioBackend.AUTO)
+        assert cfg.audio_backend == AudioBackend.PIPEWIRE
+        assert cfg.pipewire_host_socket == str(tmp_path / "pipewire-0")
+        assert cfg.pulse_host_socket == ""
+
+    def test_detect_auto_falls_back_to_pulseaudio(self, tmp_path: Path) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/data", audio=AudioBackend.AUTO)
+        assert cfg.audio_backend == AudioBackend.PULSEAUDIO
+        assert cfg.pulse_host_socket == str(tmp_path / "pulse" / "native")
+        assert cfg.pipewire_host_socket == ""
+
+    def test_detect_forced_pulseaudio(self, tmp_path: Path) -> None:
+        # Even if pipewire-0 exists, explicit PULSEAUDIO wins
+        (tmp_path / "pipewire-0").touch()
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/data", audio=AudioBackend.PULSEAUDIO)
+        assert cfg.audio_backend == AudioBackend.PULSEAUDIO
+        assert cfg.pipewire_host_socket == ""
+
+    def test_detect_forced_pipewire(self, tmp_path: Path) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/data", audio=AudioBackend.PIPEWIRE)
+        assert cfg.audio_backend == AudioBackend.PIPEWIRE
+        assert cfg.pipewire_host_socket == str(tmp_path / "pipewire-0")
+
+    def test_detect_sets_wayland_socket(self, tmp_path: Path) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/data")
+        assert cfg.wayland_host_socket == str(tmp_path / "wayland-0")
+
+    def test_detect_uses_provided_waydroid_data(self, tmp_path: Path) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend._xdg_runtime_dir", return_value=str(tmp_path)):
+            cfg = SessionConfig.detect(waydroid_data="/custom/data")
+        assert cfg.waydroid_data == "/custom/data"
 
 
 # ── LxcBackend ────────────────────────────────────────────────────────────────
@@ -240,47 +301,62 @@ class TestIncusBackend:
             flat = " ".join(mock_run.call_args[0][0])
             assert "MY_VAR=hello" in flat
 
-    def test_configure_session_adds_devices(self) -> None:
-        session = SessionConfig(
+    def _pulse_session(self) -> SessionConfig:
+        return SessionConfig(
             wayland_host_socket="/run/user/1000/wayland-0",
             wayland_container_socket="/run/waydroid-session/wayland-0",
-            pulse_host_socket="/run/user/1000/pulse/native",
-            pulse_container_socket="/run/waydroid-session/pulse/native",
             waydroid_data="/home/user/.local/share/waydroid/data",
             xdg_runtime_dir="/run/waydroid-session",
+            audio_backend=AudioBackend.PULSEAUDIO,
+            pulse_host_socket="/run/user/1000/pulse/native",
+            pulse_container_socket="/run/waydroid-session/pulse/native",
         )
+
+    def _pipewire_session(self) -> SessionConfig:
+        return SessionConfig(
+            wayland_host_socket="/run/user/1000/wayland-0",
+            wayland_container_socket="/run/waydroid-session/wayland-0",
+            waydroid_data="/home/user/.local/share/waydroid/data",
+            xdg_runtime_dir="/run/waydroid-session",
+            audio_backend=AudioBackend.PIPEWIRE,
+            pipewire_host_socket="/run/user/1000/pipewire-0",
+            pipewire_container_socket="/run/waydroid-session/pipewire-0",
+        )
+
+    def test_configure_session_adds_devices_pulseaudio(self) -> None:
         with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
-            IncusBackend().configure_session(session)
-        # Each device: one remove attempt + one add call
-        # command: ["incus", "config", "device", "add", CONTAINER, NAME, ...]
-        add_calls = [
-            c for c in mock_run.call_args_list
-            if len(c[0][0]) > 3 and c[0][0][3] == "add"
-        ]
+            IncusBackend().configure_session(self._pulse_session())
+        add_calls = [c for c in mock_run.call_args_list if len(c[0][0]) > 3 and c[0][0][3] == "add"]
         device_names = [c[0][0][5] for c in add_calls]
         assert "session_wayland" in device_names
         assert "session_pulse" in device_names
         assert "session_data" in device_names
         assert "session_xdg_tmpfs" in device_names
+        assert "session_pipewire" not in device_names
 
-    def test_remove_session_devices_removes_all(self) -> None:
-        session = SessionConfig(
-            wayland_host_socket="/run/user/1000/wayland-0",
-            wayland_container_socket="/run/waydroid-session/wayland-0",
-            pulse_host_socket="/run/user/1000/pulse/native",
-            pulse_container_socket="/run/waydroid-session/pulse/native",
-            waydroid_data="/home/user/.local/share/waydroid/data",
-            xdg_runtime_dir="/run/waydroid-session",
-        )
+    def test_configure_session_adds_pipewire_device(self) -> None:
         with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
-            IncusBackend().remove_session_devices(session)
-        remove_calls = [
-            c for c in mock_run.call_args_list
-            if "remove" in c[0][0]
-        ]
-        assert len(remove_calls) == 4
+            IncusBackend().configure_session(self._pipewire_session())
+        add_calls = [c for c in mock_run.call_args_list if len(c[0][0]) > 3 and c[0][0][3] == "add"]
+        device_names = [c[0][0][5] for c in add_calls]
+        assert "session_pipewire" in device_names
+        assert "session_pulse" not in device_names
+
+    def test_remove_session_devices_removes_all(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().remove_session_devices(self._pulse_session())
+        remove_calls = [c for c in mock_run.call_args_list if "remove" in c[0][0]]
+        assert len(remove_calls) == 4  # xdg_tmpfs, wayland, pulse, data
+
+    def test_remove_session_devices_pipewire(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().remove_session_devices(self._pipewire_session())
+        remove_calls = [c for c in mock_run.call_args_list if "remove" in c[0][0]]
+        assert len(remove_calls) == 4  # xdg_tmpfs, wayland, pipewire, data
 
     def test_get_info_parses_client_version(self) -> None:
         version_output = "Client version: 6.1\nServer version: 6.1\n"

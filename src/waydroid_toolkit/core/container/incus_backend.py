@@ -17,8 +17,8 @@ tools/helpers/lxc.py are handled here:
   2. tmpfs + bind mounts — added as `disk` devices (vendor, sys nodes, wslg,
                           dev/, tmp/, var/, run/).
   3. Session mounts     — configure_session() applies per-session Wayland
-                          socket, PulseAudio socket, and userdata bind mounts
-                          dynamically at session start.
+                          socket, PulseAudio/PipeWire socket, and userdata
+                          bind mounts dynamically at session start.
   4. Android env vars   — execute() passes the full ANDROID_ENV dict via
                           `incus exec --env` so Android PATH and runtime
                           roots are correct inside the container.
@@ -31,6 +31,17 @@ tools/helpers/lxc.py are handled here:
                           `incus config set` call so nothing overwrites
                           anything else.
 
+Audio backend selection
+-----------------------
+SessionConfig supports both PulseAudio and PipeWire. Use
+SessionConfig.detect() to auto-select: it prefers the PipeWire native
+socket ($XDG_RUNTIME_DIR/pipewire-0) when present, and falls back to the
+PulseAudio-compatible socket ($XDG_RUNTIME_DIR/pulse/native).
+
+PipeWire ships a PulseAudio compatibility layer (pipewire-pulse), so the
+PulseAudio socket path works on PipeWire systems too. The native PipeWire
+socket gives lower latency and avoids the translation overhead.
+
 This toolkit does not modify upstream waydroid/waydroid. The waydroid daemon
 continues to manage its own LXC config files; the Incus backend reads those
 files and mirrors them into Incus on setup.
@@ -40,9 +51,11 @@ from __future__ import annotations
 
 import glob
 import json
+import os
 import shutil
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 
 from .base import BackendInfo, BackendType, ContainerBackend, ContainerState
@@ -199,20 +212,104 @@ def _static_disk_mounts() -> list[_DiskMount]:
     ]
 
 
+# ── Audio backend ─────────────────────────────────────────────────────────────
+
+class AudioBackend(Enum):
+    """Audio socket type to mount into the container.
+
+    PULSEAUDIO — PulseAudio native socket, or PipeWire's PulseAudio
+                 compatibility socket (pipewire-pulse). Works on both
+                 pure PulseAudio and PipeWire systems.
+    PIPEWIRE   — PipeWire native socket (pipewire-0). Lower latency than
+                 going through the PulseAudio compatibility layer.
+                 Requires PipeWire >= 0.3 on the host.
+    AUTO       — Sentinel used by SessionConfig.detect(); resolved to
+                 PIPEWIRE when the native socket exists, else PULSEAUDIO.
+    """
+    PULSEAUDIO = auto()
+    PIPEWIRE = auto()
+    AUTO = auto()
+
+
+def _xdg_runtime_dir() -> str:
+    """Return $XDG_RUNTIME_DIR, falling back to /run/user/<uid>."""
+    return os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+
+
+def detect_audio_backend(xdg_runtime_dir: str | None = None) -> AudioBackend:
+    """Return PIPEWIRE if the native socket exists, else PULSEAUDIO.
+
+    Checks $XDG_RUNTIME_DIR/pipewire-0 on the host. PipeWire's PulseAudio
+    compatibility socket ($XDG_RUNTIME_DIR/pulse/native) is intentionally
+    not used as the detection signal — its presence only means pipewire-pulse
+    is running, not that the native socket is available.
+    """
+    xdg = xdg_runtime_dir or _xdg_runtime_dir()
+    if Path(xdg, "pipewire-0").exists():
+        return AudioBackend.PIPEWIRE
+    return AudioBackend.PULSEAUDIO
+
+
 # ── Session config ────────────────────────────────────────────────────────────
 
 @dataclass
 class SessionConfig:
     """Per-session mount parameters.
 
-    Mirrors the inputs to generate_session_lxc_config() in upstream lxc.py.
+    Mirrors the inputs to generate_session_lxc_config() in upstream lxc.py,
+    extended with PipeWire native socket support.
+
+    Build manually or use SessionConfig.detect() to auto-populate from the
+    running host environment.
     """
     wayland_host_socket: str       # e.g. /run/user/1000/wayland-0
     wayland_container_socket: str  # e.g. /run/waydroid-session/wayland-0
-    pulse_host_socket: str         # e.g. /run/user/1000/pulse/native
-    pulse_container_socket: str    # e.g. /run/waydroid-session/pulse/native
     waydroid_data: str             # e.g. ~/.local/share/waydroid/data
     xdg_runtime_dir: str           # container XDG_RUNTIME_DIR path
+
+    # Audio — exactly one of these pairs is populated depending on audio_backend
+    audio_backend: AudioBackend = field(default=AudioBackend.PULSEAUDIO)
+
+    # PulseAudio socket (used when audio_backend == PULSEAUDIO)
+    pulse_host_socket: str = ""
+    pulse_container_socket: str = ""
+
+    # PipeWire native socket (used when audio_backend == PIPEWIRE)
+    pipewire_host_socket: str = ""
+    pipewire_container_socket: str = ""
+
+    @classmethod
+    def detect(
+        cls,
+        waydroid_data: str | None = None,
+        audio: AudioBackend = AudioBackend.AUTO,
+    ) -> SessionConfig:
+        """Build a SessionConfig from the current host environment.
+
+        Reads XDG_RUNTIME_DIR, UID, and probes for audio sockets.
+        audio=AUTO (default) picks PIPEWIRE when the native socket exists.
+        """
+        xdg = _xdg_runtime_dir()
+        data = waydroid_data or str(Path.home() / ".local/share/waydroid/data")
+
+        resolved_audio = detect_audio_backend(xdg) if audio == AudioBackend.AUTO else audio
+
+        cfg = cls(
+            wayland_host_socket=f"{xdg}/wayland-0",
+            wayland_container_socket="/run/waydroid-session/wayland-0",
+            waydroid_data=data,
+            xdg_runtime_dir="/run/waydroid-session",
+            audio_backend=resolved_audio,
+        )
+
+        if resolved_audio == AudioBackend.PIPEWIRE:
+            cfg.pipewire_host_socket = f"{xdg}/pipewire-0"
+            cfg.pipewire_container_socket = "/run/waydroid-session/pipewire-0"
+        else:
+            cfg.pulse_host_socket = f"{xdg}/pulse/native"
+            cfg.pulse_container_socket = "/run/waydroid-session/pulse/native"
+
+        return cfg
 
 
 # ── IncusBackend ──────────────────────────────────────────────────────────────
@@ -370,7 +467,7 @@ class IncusBackend(ContainerBackend):
     def _session_device_specs(
         self, session: SessionConfig,
     ) -> dict[str, list[str]]:
-        return {
+        specs: dict[str, list[str]] = {
             "session_xdg_tmpfs": [
                 "disk",
                 "source=tmpfs",
@@ -381,17 +478,27 @@ class IncusBackend(ContainerBackend):
                 f"source={session.wayland_host_socket}",
                 f"path={session.wayland_container_socket}",
             ],
-            "session_pulse": [
-                "disk",
-                f"source={session.pulse_host_socket}",
-                f"path={session.pulse_container_socket}",
-            ],
             "session_data": [
                 "disk",
                 f"source={session.waydroid_data}",
                 "path=/data",
             ],
         }
+
+        if session.audio_backend == AudioBackend.PIPEWIRE and session.pipewire_host_socket:
+            specs["session_pipewire"] = [
+                "disk",
+                f"source={session.pipewire_host_socket}",
+                f"path={session.pipewire_container_socket}",
+            ]
+        elif session.pulse_host_socket:
+            specs["session_pulse"] = [
+                "disk",
+                f"source={session.pulse_host_socket}",
+                f"path={session.pulse_container_socket}",
+            ]
+
+        return specs
 
     # ── Setup from existing LXC config ───────────────────────────────────────
 
