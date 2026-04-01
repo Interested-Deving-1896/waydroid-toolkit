@@ -6,6 +6,7 @@ from rich.table import Table
 
 from waydroid_toolkit.core.adb import is_available as adb_available
 from waydroid_toolkit.core.adb import is_connected as adb_connected
+from waydroid_toolkit.core.container import get_active
 from waydroid_toolkit.core.waydroid import (
     SessionState,
     WaydroidConfig,
@@ -42,6 +43,12 @@ def cmd() -> None:
         cfg = WaydroidConfig.load()
         table.add_row("Images path", cfg.images_path or "(not set)")
         table.add_row("Overlay enabled", "yes" if cfg.mount_overlays else "no")
+
+        try:
+            backend = get_active()
+            table.add_row("Active backend", backend.backend_type.value)
+        except Exception:
+            table.add_row("Active backend", "unknown")
 
     table.add_row("ADB available", "✅ yes" if adb_available() else "❌ no")
     if adb_available():

@@ -1,0 +1,54 @@
+[submodule "vendor/AuroraStore"]
+	path = vendor/AuroraStore
+	url = https://github.com/whyorean/AuroraStore
+[submodule "vendor/AuroraDroid"]
+	path = vendor/AuroraDroid
+	url = https://github.com/whyorean/AuroraDroid
+[submodule "vendor/Warden"]
+	path = vendor/Warden
+	url = https://github.com/whyorean/Warden
+[submodule "vendor/GPlayApi"]
+	path = vendor/GPlayApi
+	url = https://github.com/whyorean/GPlayApi
+[submodule "vendor/Authenticator"]
+	path = vendor/Authenticator
+	url = https://github.com/whyorean/Authenticator
+[submodule "vendor/AASTokenGrabber"]
+	path = vendor/AASTokenGrabber
+	url = https://github.com/whyorean/AASTokenGrabber
+[submodule "vendor/token-dispenser"]
+	path = vendor/token-dispenser
+	url = https://github.com/whyorean/token-dispenser
+[submodule "vendor/plexus"]
+	path = vendor/plexus
+	url = https://github.com/whyorean/plexus
+[submodule "vendor/AuroraServices"]
+	path = vendor/AuroraServices
+	url = https://github.com/whyorean/AuroraServices
+[submodule "vendor/AuroraServices-Magisk"]
+	path = vendor/AuroraServices-Magisk
+	url = https://github.com/whyorean/AuroraServices-Magisk
+[submodule "vendor/AuroraDispenser"]
+	path = vendor/AuroraDispenser
+	url = https://github.com/whyorean/AuroraDispenser
+[submodule "vendor/playstore-api-v2"]
+	path = vendor/playstore-api-v2
+	url = https://github.com/whyorean/playstore-api-v2
+[submodule "vendor/CoronaStats-Worldwide"]
+	path = vendor/CoronaStats-Worldwide
+	url = https://github.com/whyorean/CoronaStats-Worldwide
+[submodule "vendor/CoronaStats"]
+	path = vendor/CoronaStats
+	url = https://github.com/whyorean/CoronaStats
+[submodule "vendor/spark-kotlin"]
+	path = vendor/spark-kotlin
+	url = https://github.com/whyorean/spark-kotlin
+[submodule "vendor/YalpStore"]
+	path = vendor/YalpStore
+	url = https://github.com/whyorean/YalpStore
+[submodule "vendor/aurora-vcard-mapper"]
+	path = vendor/aurora-vcard-mapper
+	url = https://github.com/whyorean/aurora-vcard-mapper
+[submodule "vendor/GitHub-Store"]
+	path = vendor/GitHub-Store
+	url = https://github.com/OpenHub-Store/GitHub-Store

@@ -96,12 +96,16 @@ class TestInstallPackage:
 
 # ── init_waydroid ─────────────────────────────────────────────────────────────
 
+_PATCH_BUNDLED = "waydroid_toolkit.modules.installer.bundled_apps.install_bundled_apps"
+
+
 class TestInitWaydroid:
     def test_calls_waydroid_init(self) -> None:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
             with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                init_waydroid()
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid()
         cmd = " ".join(mock_run.call_args[0][0])
         assert "waydroid" in cmd
         assert "init" in cmd
@@ -109,16 +113,18 @@ class TestInitWaydroid:
     def test_passes_vanilla_image_type(self) -> None:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
             with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                init_waydroid(image_type=ImageType.VANILLA)
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid(image_type=ImageType.VANILLA)
         cmd = " ".join(mock_run.call_args[0][0])
         assert "VANILLA" in cmd
 
     def test_passes_gapps_image_type(self) -> None:
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
             with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                init_waydroid(image_type=ImageType.GAPPS)
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid(image_type=ImageType.GAPPS)
         cmd = " ".join(mock_run.call_args[0][0])
         assert "GAPPS" in cmd
 
@@ -126,9 +132,26 @@ class TestInitWaydroid:
         messages: list[str] = []
         with patch("waydroid_toolkit.modules.installer.installer.require_root"):
             with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                init_waydroid(progress=messages.append)
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid(progress=messages.append)
         assert len(messages) >= 1
+
+    def test_no_bundled_apps_skips_install(self) -> None:
+        with patch("waydroid_toolkit.modules.installer.installer.require_root"):
+            with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
+                with patch(_PATCH_BUNDLED) as mock_bundled:
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid(install_apps=False)
+        mock_bundled.assert_not_called()
+
+    def test_bundled_apps_called_by_default(self) -> None:
+        with patch("waydroid_toolkit.modules.installer.installer.require_root"):
+            with patch("waydroid_toolkit.modules.installer.installer.subprocess.run") as mock_run:
+                with patch(_PATCH_BUNDLED, return_value=[]) as mock_bundled:
+                    mock_run.return_value = MagicMock(returncode=0)
+                    init_waydroid()
+        mock_bundled.assert_called_once()
 
 
 # ── uninstall_waydroid ────────────────────────────────────────────────────────

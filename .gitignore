@@ -30,3 +30,6 @@ htmlcov/
 *.whl
 *.tar.gz
 MANIFEST
+
+# Downloaded APK cache
+/tmp/waydroid-toolkit/
