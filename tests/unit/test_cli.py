@@ -62,3 +62,12 @@ def test_subcommand_help_maintenance() -> None:
     runner = CliRunner()
     result = runner.invoke(cli, ["maintenance", "--help"])
     assert result.exit_code == 0
+
+
+def test_subcommand_help_backend() -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["backend", "--help"])
+    assert result.exit_code == 0
+    assert "switch" in result.output
+    assert "detect" in result.output
+    assert "list" in result.output
