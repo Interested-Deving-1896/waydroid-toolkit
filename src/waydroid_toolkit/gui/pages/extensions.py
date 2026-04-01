@@ -10,6 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
+from waydroid_toolkit.gui.presenters import get_extension_rows
 from waydroid_toolkit.modules.extensions import ExtensionState, list_all
 
 from .base import BasePage
@@ -45,7 +46,8 @@ class ExtensionsPage(BasePage):
 
     def _refresh_states(self) -> None:
         def _work() -> None:
-            states = {ext.meta.id: ext.state() for ext in list_all()}
+            rows = get_extension_rows()
+            states = {r.ext_id: r.state for r in rows}
 
             def _update() -> None:
                 for ext_id, (row, install_btn, remove_btn) in self._rows.items():

@@ -10,10 +10,10 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
+from waydroid_toolkit.gui.presenters import get_backup_entries
 from waydroid_toolkit.modules.backup import (
     DEFAULT_BACKUP_DIR,
     create_backup,
-    list_backups,
     restore_backup,
 )
 
@@ -69,7 +69,7 @@ class BackupPage(BasePage):
 
     def _load_backups(self) -> None:
         def _work() -> None:
-            archives = list_backups()
+            entries = get_backup_entries()
 
             def _update() -> None:
                 child = self._backups_list.get_first_child()
@@ -77,13 +77,12 @@ class BackupPage(BasePage):
                     nxt = child.get_next_sibling()
                     self._backups_list.remove(child)
                     child = nxt
-                for a in archives:
-                    size_mb = a.stat().st_size / (1024 * 1024)
+                for entry in entries:
                     row = Adw.ActionRow(
-                        title=a.name,
-                        subtitle=f"{size_mb:.1f} MB",
+                        title=entry.name,
+                        subtitle=f"{entry.size_mb:.1f} MB",
                     )
-                    row.set_name(str(a))
+                    row.set_name(str(entry.path))
                     self._backups_list.append(row)
 
             GLib.idle_add(_update)

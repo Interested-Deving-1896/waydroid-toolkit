@@ -10,15 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib
 
-from waydroid_toolkit.core.adb import is_available as adb_available
-from waydroid_toolkit.core.adb import is_connected as adb_connected
-from waydroid_toolkit.core.waydroid import (
-    SessionState,
-    WaydroidConfig,
-    get_session_state,
-    is_initialized,
-    is_installed,
-)
+from waydroid_toolkit.gui.presenters import get_status_data
 
 from .base import BasePage
 
@@ -54,21 +46,16 @@ class StatusPage(BasePage):
 
     def _refresh(self) -> None:
         def _work() -> None:
-            installed = is_installed()
-            initialized = is_initialized() if installed else False
-            state = get_session_state() if installed else SessionState.UNKNOWN
-            cfg = WaydroidConfig.load()
-            adb_ok = adb_available()
-            adb_conn = adb_connected() if adb_ok else False
+            data = get_status_data()
 
             def _update() -> None:
-                self._row_installed.set_subtitle("Yes" if installed else "No")
-                self._row_initialized.set_subtitle("Yes" if initialized else "No")
-                self._row_session.set_subtitle(state.value.capitalize())
-                self._row_images.set_subtitle(cfg.images_path or "(not set)")
-                self._row_overlay.set_subtitle("Yes" if cfg.mount_overlays else "No")
-                self._row_adb.set_subtitle("Yes" if adb_ok else "No")
-                self._row_adb_conn.set_subtitle("Yes" if adb_conn else "No")
+                self._row_installed.set_subtitle("Yes" if data.installed else "No")
+                self._row_initialized.set_subtitle("Yes" if data.initialized else "No")
+                self._row_session.set_subtitle(data.session_state.value.capitalize())
+                self._row_images.set_subtitle(data.images_path or "(not set)")
+                self._row_overlay.set_subtitle("Yes" if data.mount_overlays else "No")
+                self._row_adb.set_subtitle("Yes" if data.adb_available else "No")
+                self._row_adb_conn.set_subtitle("Yes" if data.adb_connected else "No")
 
             GLib.idle_add(_update)
 

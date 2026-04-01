@@ -10,7 +10,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
-from waydroid_toolkit.modules.images import get_active_profile, scan_profiles, switch_profile
+from waydroid_toolkit.gui.presenters import get_image_profile_rows
+from waydroid_toolkit.modules.images import switch_profile
 
 from .base import BasePage
 
@@ -37,8 +38,7 @@ class ImagesPage(BasePage):
         self._status_label.set_label("Scanning…")
 
         def _work() -> None:
-            profiles = scan_profiles()
-            active = get_active_profile()
+            profile_rows = get_image_profile_rows()
 
             def _update() -> None:
                 # Clear existing rows
@@ -48,23 +48,24 @@ class ImagesPage(BasePage):
                     self._group.remove(child)
                     child = nxt
 
-                if not profiles:
+                if not profile_rows:
                     self._status_label.set_label(
                         "No profiles found. Place system.img + vendor.img pairs"
                         " under ~/waydroid-images/."
                     )
                     return
 
-                self._status_label.set_label(f"{len(profiles)} profile(s) found.")
-                for p in profiles:
-                    is_active = active and str(p.path) in active
-                    active_tag = " (active)" if is_active else ""
-                    subtitle = str(p.path) + active_tag
-                    row = Adw.ActionRow(title=p.name, subtitle=subtitle)
-                    if not is_active:
+                self._status_label.set_label(f"{len(profile_rows)} profile(s) found.")
+                for pr in profile_rows:
+                    active_tag = " (active)" if pr.is_active else ""
+                    subtitle = str(pr.path) + active_tag
+                    row = Adw.ActionRow(title=pr.name, subtitle=subtitle)
+                    if not pr.is_active:
+                        from waydroid_toolkit.modules.images.manager import ImageProfile
+                        profile = ImageProfile(name=pr.name, path=pr.path)
                         btn = Gtk.Button(label="Switch", css_classes=["suggested-action"],
                                          valign=Gtk.Align.CENTER)
-                        btn.connect("clicked", self._on_switch, p)
+                        btn.connect("clicked", self._on_switch, profile)
                         row.add_suffix(btn)
                     self._group.add(row)
 
