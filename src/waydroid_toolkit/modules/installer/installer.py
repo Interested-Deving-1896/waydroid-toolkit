@@ -4,17 +4,36 @@ Handles detection of the host distro and installs Waydroid via the
 appropriate package manager. Covers Debian/Ubuntu, Arch, Fedora, openSUSE,
 NixOS, Void, Alpine, and Gentoo.
 After package installation it runs `waydroid init` with the chosen image type.
+
+Custom image installation
+-------------------------
+`waydroid init` does not accept image paths as CLI flags. Instead it checks
+two pre-defined directories for a pre-installed system.img + vendor.img:
+
+  /etc/waydroid-extra/images   (system-wide, requires root)
+  /usr/share/waydroid-extra/images
+
+When `system_img` and `vendor_img` are supplied to `init_waydroid()`, the
+images are staged into `/etc/waydroid-extra/images/` via hard-links (same
+filesystem) or copies (cross-filesystem) before `waydroid init` runs.
+Waydroid detects them automatically and skips the OTA download.
+The staged copies are removed after init completes.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from collections.abc import Callable
 from enum import Enum
+from pathlib import Path
 
 from waydroid_toolkit.core.privilege import require_root
 from waydroid_toolkit.utils.distro import Distro
+
+# Waydroid's pre-installed images directory (checked before OTA download)
+_PREINSTALLED_IMAGES_DIR = Path("/etc/waydroid-extra/images")
 
 
 class ImageType(Enum):
@@ -114,34 +133,102 @@ def install_package(distro: Distro, progress: Callable[[str], None] | None = Non
     subprocess.run(cmd, check=True)
 
 
+def _stage_images(
+    system_img: Path,
+    vendor_img: Path,
+    progress: Callable[[str], None] | None = None,
+) -> None:
+    """Copy or hard-link system.img and vendor.img into the waydroid-extra dir.
+
+    waydroid init checks /etc/waydroid-extra/images/ for pre-installed images
+    before attempting an OTA download. Staging the manifest images there lets
+    waydroid init use them directly.
+
+    Hard-links are used when source and destination are on the same filesystem
+    (instant, no extra disk space). Falls back to a full copy otherwise.
+    """
+    dest = _PREINSTALLED_IMAGES_DIR
+    subprocess.run(["sudo", "mkdir", "-p", str(dest)], check=True)
+
+    for src, name in [(system_img, "system.img"), (vendor_img, "vendor.img")]:
+        dst = dest / name
+        if progress:
+            progress(f"Staging {name} → {dst}")
+        # Remove any existing file first (sudo required — dest is root-owned)
+        subprocess.run(["sudo", "rm", "-f", str(dst)], check=True)
+        try:
+            # Try hard-link first (same filesystem, zero copy cost)
+            os.link(src, dst)
+        except OSError:
+            # Cross-filesystem or permission error — fall back to sudo cp
+            subprocess.run(["sudo", "cp", "--reflink=auto", str(src), str(dst)], check=True)
+
+
+def _unstage_images(progress: Callable[[str], None] | None = None) -> None:
+    """Remove staged images from the waydroid-extra directory after init."""
+    dest = _PREINSTALLED_IMAGES_DIR
+    for name in ("system.img", "vendor.img"):
+        path = dest / name
+        subprocess.run(["sudo", "rm", "-f", str(path)], capture_output=True)
+    # Remove the directory only if it is now empty
+    subprocess.run(
+        ["sudo", "rmdir", "--ignore-fail-on-non-empty", str(dest)],
+        capture_output=True,
+    )
+    if progress:
+        progress("Cleaned up staged images.")
+
+
 def init_waydroid(
     image_type: ImageType = ImageType.VANILLA,
     arch: ImageArch = ImageArch.X86_64,
     install_apps: bool = True,
+    system_img: Path | None = None,
+    vendor_img: Path | None = None,
     progress: Callable[[str], None] | None = None,
 ) -> None:
     """Initialise Waydroid with the chosen image type and architecture.
 
-    When install_apps is True (default), bundled apps (F-Droid, AuroraStore,
-    AuroraDroid, AuroraServices, and GitHub-Releases apps) are installed into
-    the image after init completes. Pass install_apps=False to skip this step.
+    Custom images
+    -------------
+    When system_img and vendor_img are both provided, they are staged into
+    /etc/waydroid-extra/images/ before `waydroid init` runs. Waydroid detects
+    them automatically and skips the OTA download. The staged files are removed
+    after init completes regardless of success or failure.
+
+    Both paths must be provided together — supplying only one raises ValueError.
+
+    Bundled apps
+    ------------
+    When install_apps is True (default), F-Droid, AuroraStore, AuroraDroid,
+    AuroraServices, and selected GitHub-Releases apps are installed into the
+    image after init completes. Pass install_apps=False to skip this step.
     """
+    if (system_img is None) != (vendor_img is None):
+        raise ValueError(
+            "system_img and vendor_img must both be provided or both omitted."
+        )
+
     require_root("Initialising Waydroid")
-    cmd = [
-        "sudo", "waydroid", "init",
-        "-s", image_type.value,
-        "-f",
-    ]
-    if progress:
-        progress(f"Initialising Waydroid ({image_type.value}, {arch.value})...")
-    subprocess.run(cmd, check=True)
+
+    staged = False
+    try:
+        if system_img is not None and vendor_img is not None:
+            _stage_images(system_img, vendor_img, progress)
+            staged = True
+
+        cmd = ["sudo", "waydroid", "init", "-s", image_type.value, "-f"]
+        if progress:
+            mode = "custom images" if staged else f"{image_type.value}, {arch.value}"
+            progress(f"Initialising Waydroid ({mode})...")
+        subprocess.run(cmd, check=True)
+
+    finally:
+        if staged:
+            _unstage_images(progress)
 
     if install_apps:
-        # Lazy import — bundled_apps pulls in ADB/network deps not needed
-        # for the plain install path.
-        from waydroid_toolkit.modules.installer.bundled_apps import (
-            install_bundled_apps,
-        )
+        from waydroid_toolkit.modules.installer.bundled_apps import install_bundled_apps
         if progress:
             progress("Installing bundled apps...")
         results = install_bundled_apps(progress)

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import subprocess
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from waydroid_toolkit.modules.installer.installer import (
     ImageType,
+    _stage_images,
+    _unstage_images,
     init_waydroid,
     install_package,
     is_waydroid_installed,
@@ -180,3 +184,136 @@ class TestUninstallWaydroid:
                 uninstall_waydroid(Distro.UBUNTU)
         cmds = [" ".join(c[0][0]) for c in mock_run.call_args_list]
         assert any("session" in c and "stop" in c for c in cmds)
+
+
+# ── _stage_images ─────────────────────────────────────────────────────────────
+
+_PATCH_BUNDLED = "waydroid_toolkit.modules.installer.bundled_apps.install_bundled_apps"
+_PATCH_RUN     = "waydroid_toolkit.modules.installer.installer.subprocess.run"
+_PATCH_ROOT    = "waydroid_toolkit.modules.installer.installer.require_root"
+_PATCH_LINK    = "waydroid_toolkit.modules.installer.installer.os.link"
+_PATCH_STAGE   = "waydroid_toolkit.modules.installer.installer._stage_images"
+_PATCH_UNSTAGE = "waydroid_toolkit.modules.installer.installer._unstage_images"
+
+
+class TestStageImages:
+    def test_stages_both_images(self, tmp_path: Path) -> None:
+        system = tmp_path / "system.img"
+        vendor = tmp_path / "vendor.img"
+        system.write_bytes(b"system")
+        vendor.write_bytes(b"vendor")
+
+        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)) as mock_run:
+            with patch(_PATCH_LINK) as mock_link:
+                _stage_images(system, vendor)
+
+        run_cmds = [" ".join(c[0][0]) for c in mock_run.call_args_list]
+        assert any("mkdir" in c for c in run_cmds)
+        assert any("system.img" in c for c in run_cmds)
+        assert any("vendor.img" in c for c in run_cmds)
+        assert mock_link.call_count == 2
+
+    def test_falls_back_to_copy_on_link_error(self, tmp_path: Path) -> None:
+        system = tmp_path / "system.img"
+        vendor = tmp_path / "vendor.img"
+        system.write_bytes(b"system")
+        vendor.write_bytes(b"vendor")
+
+        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)) as mock_run:
+            with patch(_PATCH_LINK, side_effect=OSError("cross-device")):
+                _stage_images(system, vendor)
+
+        run_cmds = [" ".join(c[0][0]) for c in mock_run.call_args_list]
+        assert any("cp" in c for c in run_cmds)
+
+    def test_progress_called_for_each_image(self, tmp_path: Path) -> None:
+        system = tmp_path / "system.img"
+        vendor = tmp_path / "vendor.img"
+        system.write_bytes(b"s")
+        vendor.write_bytes(b"v")
+        messages: list[str] = []
+
+        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)):
+            with patch(_PATCH_LINK):
+                _stage_images(system, vendor, progress=messages.append)
+
+        assert any("system.img" in m for m in messages)
+        assert any("vendor.img" in m for m in messages)
+
+
+class TestUnstageImages:
+    def test_removes_staged_files(self) -> None:
+        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)) as mock_run:
+            _unstage_images()
+
+        run_cmds = [" ".join(c[0][0]) for c in mock_run.call_args_list]
+        assert any("system.img" in c for c in run_cmds)
+        assert any("vendor.img" in c for c in run_cmds)
+        assert any("rmdir" in c for c in run_cmds)
+
+    def test_progress_called(self) -> None:
+        messages: list[str] = []
+        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)):
+            _unstage_images(progress=messages.append)
+        assert len(messages) >= 1
+
+
+# ── init_waydroid with custom images ─────────────────────────────────────────
+
+class TestInitWaydroidCustomImages:
+    def test_raises_when_only_system_img_given(self, tmp_path: Path) -> None:
+        with pytest.raises(ValueError, match="both be provided or both omitted"):
+            init_waydroid(system_img=tmp_path / "system.img")
+
+    def test_raises_when_only_vendor_img_given(self, tmp_path: Path) -> None:
+        with pytest.raises(ValueError, match="both be provided or both omitted"):
+            init_waydroid(vendor_img=tmp_path / "vendor.img")
+
+    def test_stages_and_unstages_on_success(self, tmp_path: Path) -> None:
+        system = tmp_path / "system.img"
+        vendor = tmp_path / "vendor.img"
+        system.write_bytes(b"s")
+        vendor.write_bytes(b"v")
+
+        with patch(_PATCH_ROOT):
+            with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)):
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    with patch(_PATCH_STAGE) as mock_stage:
+                        with patch(_PATCH_UNSTAGE) as mock_unstage:
+                            init_waydroid(
+                                system_img=system,
+                                vendor_img=vendor,
+                                install_apps=False,
+                            )
+
+        mock_stage.assert_called_once_with(system, vendor, None)
+        mock_unstage.assert_called_once()
+
+    def test_unstages_even_on_waydroid_init_failure(self, tmp_path: Path) -> None:
+        system = tmp_path / "system.img"
+        vendor = tmp_path / "vendor.img"
+        system.write_bytes(b"s")
+        vendor.write_bytes(b"v")
+
+        with patch(_PATCH_ROOT):
+            with patch(_PATCH_RUN, side_effect=subprocess.CalledProcessError(1, "waydroid")):
+                with patch(_PATCH_STAGE):
+                    with patch(_PATCH_UNSTAGE) as mock_unstage:
+                        with pytest.raises(subprocess.CalledProcessError):
+                            init_waydroid(
+                                system_img=system,
+                                vendor_img=vendor,
+                                install_apps=False,
+                            )
+
+        mock_unstage.assert_called_once()
+
+    def test_no_staging_when_no_images_given(self) -> None:
+        with patch(_PATCH_ROOT):
+            with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)):
+                with patch(_PATCH_BUNDLED, return_value=[]):
+                    with patch(_PATCH_STAGE) as mock_stage:
+                        init_waydroid(install_apps=False)
+
+        mock_stage.assert_not_called()
+

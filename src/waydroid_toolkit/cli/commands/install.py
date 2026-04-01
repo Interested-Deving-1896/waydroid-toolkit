@@ -92,7 +92,12 @@ def cmd(
 
 
 def _install_from_manifest(manifest_path: Path, no_bundled_apps: bool) -> None:
-    """Install Waydroid using image paths from a penguins-eggs manifest."""
+    """Install Waydroid using image paths from a penguins-eggs manifest.
+
+    Reads system.img and vendor.img paths from the manifest and stages them
+    into /etc/waydroid-extra/images/ so waydroid init uses them directly
+    instead of downloading images from the OTA channel.
+    """
     def progress(msg: str) -> None:
         console.print(f"  [cyan]→[/cyan] {msg}")
 
@@ -107,6 +112,7 @@ def _install_from_manifest(manifest_path: Path, no_bundled_apps: bool) -> None:
     m_variant = manifest.get(AndroidShared.MANIFEST_VARIANT, "unknown")
     m_ver     = manifest.get(AndroidShared.MANIFEST_ANDROID_VER, "unknown")
     m_system  = manifest.get(AndroidShared.MANIFEST_SYSTEM_IMG, "")
+    m_vendor  = manifest.get(AndroidShared.MANIFEST_VENDOR_IMG, "")
     m_boot    = manifest.get(AndroidShared.MANIFEST_BOOT_IMG, "")
 
     console.print(
@@ -115,12 +121,48 @@ def _install_from_manifest(manifest_path: Path, no_bundled_apps: bool) -> None:
         f"android=[green]{m_ver}[/green]"
     )
 
+    # Resolve image paths — system.img is required; vendor.img falls back to
+    # the same directory as system.img when not explicitly listed in the manifest
+    system_img: Path | None = None
+    vendor_img: Path | None = None
+
+    if m_system:
+        system_img = Path(m_system)
+        if not system_img.exists():
+            console.print(f"[red]system.img not found:[/red] {system_img}")
+            raise SystemExit(1)
+
+        # Derive vendor.img: use manifest value if present, else sibling file
+        if m_vendor:
+            vendor_img = Path(m_vendor)
+        else:
+            vendor_img = system_img.parent / "vendor.img"
+
+        if not vendor_img.exists():
+            console.print(
+                f"[yellow]Warning:[/yellow] vendor.img not found at {vendor_img}. "
+                "Waydroid init will fall back to OTA download for vendor."
+            )
+            vendor_img = None
+
+        if vendor_img is None:
+            # Can't stage without both — proceed without custom images
+            system_img = None
+
+    if system_img:
+        progress(f"system.img: {system_img}")
+        progress(f"vendor.img: {vendor_img}")
+        if m_boot:
+            progress(f"boot.img:   {m_boot}  (informational — not staged)")
+    else:
+        progress("No image paths in manifest — waydroid init will download images.")
+
     # Map Android ABI to Waydroid ImageArch
     _abi_to_image_arch = {
-        AndroidShared.ABI_X8664:  ImageArch.X86_64,
-        AndroidShared.ABI_ARM64:  ImageArch.ARM64,
-        AndroidShared.ABI_X86:    ImageArch.X86_64,   # fallback
-        AndroidShared.ABI_ARM32:  ImageArch.ARM64,    # fallback
+        AndroidShared.ABI_X8664: ImageArch.X86_64,
+        AndroidShared.ABI_ARM64: ImageArch.ARM64,
+        AndroidShared.ABI_X86:   ImageArch.X86_64,
+        AndroidShared.ABI_ARM32: ImageArch.ARM64,
     }
     image_arch = _abi_to_image_arch.get(m_arch, ImageArch.X86_64)
 
@@ -133,15 +175,12 @@ def _install_from_manifest(manifest_path: Path, no_bundled_apps: bool) -> None:
         install_package(distro, progress)
 
     console.print("[bold]Initialising Waydroid from manifest images...[/bold]")
-    if m_system:
-        progress(f"system.img: {m_system}")
-    if m_boot:
-        progress(f"boot.img:   {m_boot}")
-
     init_waydroid(
         image_type=ImageType.VANILLA,
         arch=image_arch,
         install_apps=not no_bundled_apps,
+        system_img=system_img,
+        vendor_img=vendor_img,
         progress=progress,
     )
     console.print("[green]Done. Run 'wdt status' to verify.[/green]")
