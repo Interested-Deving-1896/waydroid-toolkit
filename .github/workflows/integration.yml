@@ -102,8 +102,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install TypeScript
-        run: npm install -g typescript
+      - name: Install TypeScript and Node type definitions
+        run: npm install -g typescript @types/node
 
       - name: Type-check shared/ (android-shared.ts + manifest-writer.ts)
         run: |
