@@ -196,10 +196,10 @@ class BackendBridge(WdtBridgeBase):
     @Slot()
     def refresh(self) -> None:
         def _fetch() -> dict:
-            from waydroid_toolkit.core.container import get_active, list_backends
+            from waydroid_toolkit.core.container import get_active, list_available
             backends = [
                 {"id": b.backend_type.value, "available": b.is_available()}
-                for b in list_backends()
+                for b in list_available()
             ]
             try:
                 active = get_active().backend_type.value
@@ -240,7 +240,7 @@ class ExtensionsBridge(WdtBridgeBase):
     @Slot()
     def refresh(self) -> None:
         def _fetch() -> list:
-            from waydroid_toolkit.modules.extensions import list_extensions
+            from waydroid_toolkit.modules.extensions import list_all
             return [
                 {
                     "id":          e.meta.id,
@@ -248,7 +248,7 @@ class ExtensionsBridge(WdtBridgeBase):
                     "description": e.meta.description,
                     "installed":   e.is_installed(),
                 }
-                for e in list_extensions()
+                for e in list_all()
             ]
 
         def _apply(data: list) -> None:
@@ -260,15 +260,15 @@ class ExtensionsBridge(WdtBridgeBase):
     @Slot(str)
     def install(self, ext_id: str) -> None:
         def _do() -> None:
-            from waydroid_toolkit.modules.extensions import get_extension
-            get_extension(ext_id).install()
+            from waydroid_toolkit.modules.extensions import get
+            get(ext_id).install()
         self._run(_do, on_done=lambda _: self.refresh())
 
     @Slot(str)
     def uninstall(self, ext_id: str) -> None:
         def _do() -> None:
-            from waydroid_toolkit.modules.extensions import get_extension
-            get_extension(ext_id).uninstall()
+            from waydroid_toolkit.modules.extensions import get
+            get(ext_id).uninstall()
         self._run(_do, on_done=lambda _: self.refresh())
 
 
