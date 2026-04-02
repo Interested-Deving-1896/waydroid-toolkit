@@ -455,6 +455,134 @@ class MaintenanceBridge(WdtBridgeBase):
         self._run(_do, on_done=lambda out: self.logcatOutput.emit(out))
 
 
+# ── Logcat bridge ─────────────────────────────────────────────────────────────
+
+class LogcatBridge(QtCore.QObject):
+    """Live logcat streaming bridge.
+
+    Wraps ``stream_logcat`` in a background thread and emits each line
+    to QML via ``lineReceived``. Supports tag and level filters that can
+    be changed while streaming is active (restarts the stream).
+
+    Lifecycle
+    ---------
+    QML calls ``start()`` to begin streaming.
+    QML calls ``stop()`` to terminate the stream.
+    ``streamingChanged`` is emitted whenever the running state changes.
+    """
+
+    lineReceived    = Signal(str)
+    streamingChanged = Signal()
+    errorOccurred   = Signal(str)
+
+    _LEVELS = ("V", "D", "I", "W", "E", "F")
+
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+        super().__init__(parent)
+        self._streaming = False
+        self._thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
+        self._tag: str = ""
+        self._level: str = ""   # empty = all levels
+
+    # ── Properties ────────────────────────────────────────────────────────
+
+    @Property(bool, notify=streamingChanged)
+    def streaming(self) -> bool:
+        return self._streaming
+
+    @Property(str)
+    def tag(self) -> str:
+        return self._tag
+
+    @Property(str)
+    def level(self) -> str:
+        return self._level
+
+    # ── Slots ──────────────────────────────────────────────────────────────
+
+    @Slot()
+    def start(self) -> None:
+        """Start (or restart) the logcat stream."""
+        self.stop()
+        self._stop_event.clear()
+        self._set_streaming(True)
+        self._thread = threading.Thread(target=self._stream_loop, daemon=True)
+        self._thread.start()
+
+    @Slot()
+    def stop(self) -> None:
+        """Stop the logcat stream."""
+        self._stop_event.set()
+        self._set_streaming(False)
+
+    @Slot(str)
+    def setTag(self, tag: str) -> None:
+        """Filter by tag. Empty string = no tag filter. Restarts stream."""
+        self._tag = tag.strip()
+        if self._streaming:
+            self.start()
+
+    @Slot(str)
+    def setLevel(self, level: str) -> None:
+        """Filter by minimum level (V/D/I/W/E/F). Empty = all. Restarts stream."""
+        lvl = level.strip().upper()
+        if lvl and lvl not in self._LEVELS:
+            self.errorOccurred.emit(
+                f"Unknown log level '{level}'. Valid: {', '.join(self._LEVELS)}"
+            )
+            return
+        self._level = lvl
+        if self._streaming:
+            self.start()
+
+    # ── Internal ──────────────────────────────────────────────────────────
+
+    def _set_streaming(self, value: bool) -> None:
+        if self._streaming != value:
+            self._streaming = value
+            self.streamingChanged.emit()
+
+    def _stream_loop(self) -> None:
+        """Background thread: read logcat lines and emit signals."""
+        try:
+            from waydroid_toolkit.modules.maintenance.tools import stream_logcat
+            errors_only = self._level == "E"
+            tag = self._tag or None
+            for line in stream_logcat(tag=tag, errors_only=errors_only):
+                if self._stop_event.is_set():
+                    break
+                # Client-side level filter when not using errors_only shortcut
+                if self._level and self._level not in ("E",):
+                    if not self._line_matches_level(line, self._level):
+                        continue
+                self.lineReceived.emit(line)
+        except Exception:  # noqa: BLE001
+            if not self._stop_event.is_set():
+                self.errorOccurred.emit(traceback.format_exc())
+        finally:
+            self._set_streaming(False)
+
+    @staticmethod
+    def _line_matches_level(line: str, min_level: str) -> bool:
+        """Return True if the logcat line is at or above *min_level*.
+
+        Standard logcat format: ``MM-DD HH:MM:SS.mmm PID TID LEVEL tag: msg``
+        The level character is at index 4 of the space-split tokens.
+        """
+        levels = LogcatBridge._LEVELS
+        try:
+            parts = line.split()
+            if len(parts) < 5:
+                return True  # can't parse — let it through
+            line_level = parts[4].upper()
+            if line_level not in levels:
+                return True
+            return levels.index(line_level) >= levels.index(min_level)
+        except (IndexError, ValueError):
+            return True
+
+
 # ── ADB shell bridge ──────────────────────────────────────────────────────────
 
 class AdbShellBridge(QtCore.QObject):

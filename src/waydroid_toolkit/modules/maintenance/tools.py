@@ -100,6 +100,24 @@ def stream_logcat(
         proc.terminate()
 
 
+def get_logcat(
+    lines: int = 500,
+    tag: str | None = None,
+    errors_only: bool = False,
+) -> str:
+    """Return up to *lines* of logcat output as a single string.
+
+    Collects a bounded snapshot suitable for display in a text widget.
+    Use ``stream_logcat`` for live streaming.
+    """
+    collected: list[str] = []
+    for line in stream_logcat(tag=tag, errors_only=errors_only):
+        collected.append(line)
+        if len(collected) >= lines:
+            break
+    return "\n".join(collected)
+
+
 # ── App management ────────────────────────────────────────────────────────────
 
 def freeze_app(package: str) -> None:

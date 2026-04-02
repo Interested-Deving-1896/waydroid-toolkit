@@ -29,6 +29,10 @@ class WaydroidConfig:
     images_path: str = ""
     mount_overlays: bool = True
     suspend_action: str = "freeze"
+    system_ota: str = "https://ota.waydro.id/system"
+    vendor_ota: str = "https://ota.waydro.id/vendor"
+    system_datetime: int = 0
+    vendor_datetime: int = 0
     extra: dict[str, str] = field(default_factory=dict)
 
     @classmethod
@@ -42,6 +46,10 @@ class WaydroidConfig:
             images_path=waydroid_section.get("images_path", ""),
             mount_overlays=waydroid_section.get("mount_overlays", "true").lower() == "true",
             suspend_action=waydroid_section.get("suspend_action", "freeze"),
+            system_ota=waydroid_section.get("system_ota", "https://ota.waydro.id/system"),
+            vendor_ota=waydroid_section.get("vendor_ota", "https://ota.waydro.id/vendor"),
+            system_datetime=int(waydroid_section.get("system_datetime", "0")),
+            vendor_datetime=int(waydroid_section.get("vendor_datetime", "0")),
         )
 
 

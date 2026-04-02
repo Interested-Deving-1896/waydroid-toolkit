@@ -30,6 +30,7 @@ ApplicationWindow {
         { id: "performance", label: "Performance", icon: "qrc:/icons/performance.svg", page: "pages/PerformancePage.qml" },
         { id: "backup",      label: "Backup",      icon: "qrc:/icons/backup.svg",      page: "pages/BackupPage.qml"      },
         { id: "maintenance", label: "Maintenance", icon: "qrc:/icons/maintenance.svg", page: "pages/MaintenancePage.qml" },
+        { id: "logcat",      label: "Logcat",      icon: "qrc:/icons/logcat.svg",      page: "pages/LogcatPage.qml"      },
         { id: "terminal",    label: "Terminal",    icon: "qrc:/icons/terminal.svg",    page: "pages/TerminalPage.qml"    },
     ]
 

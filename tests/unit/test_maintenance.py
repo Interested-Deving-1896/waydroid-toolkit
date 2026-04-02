@@ -13,6 +13,7 @@ from waydroid_toolkit.modules.maintenance.tools import (
     debloat,
     freeze_app,
     get_device_info,
+    get_logcat,
     launch_app,
     pull_file,
     push_file,
@@ -182,6 +183,43 @@ class TestStreamLogcat:
                    return_value=mock_proc) as mock_logcat:
             list(stream_logcat(tag="MyTag", errors_only=True))
         mock_logcat.assert_called_once_with(tag="MyTag", errors_only=True)
+
+
+class TestGetLogcat:
+    def _mock_logcat(self, lines: list[str]) -> MagicMock:
+        proc = MagicMock()
+        proc.stdout = iter(line + "\n" for line in lines)
+        return proc
+
+    def test_returns_joined_string(self) -> None:
+        proc = self._mock_logcat(["alpha", "beta", "gamma"])
+        with patch("waydroid_toolkit.modules.maintenance.tools.adb.logcat",
+                   return_value=proc):
+            result = get_logcat()
+        assert result == "alpha\nbeta\ngamma"
+
+    def test_respects_lines_limit(self) -> None:
+        proc = self._mock_logcat([f"line{i}" for i in range(100)])
+        with patch("waydroid_toolkit.modules.maintenance.tools.adb.logcat",
+                   return_value=proc):
+            result = get_logcat(lines=10)
+        assert result.count("\n") == 9  # 10 lines → 9 newlines
+        assert result.startswith("line0")
+        assert result.endswith("line9")
+
+    def test_empty_output_returns_empty_string(self) -> None:
+        proc = self._mock_logcat([])
+        with patch("waydroid_toolkit.modules.maintenance.tools.adb.logcat",
+                   return_value=proc):
+            result = get_logcat()
+        assert result == ""
+
+    def test_passes_tag_and_errors_only(self) -> None:
+        proc = self._mock_logcat([])
+        with patch("waydroid_toolkit.modules.maintenance.tools.adb.logcat",
+                   return_value=proc) as mock_logcat:
+            get_logcat(tag="WDT", errors_only=True)
+        mock_logcat.assert_called_once_with(tag="WDT", errors_only=True)
 
 
 # ── App management ────────────────────────────────────────────────────────────
