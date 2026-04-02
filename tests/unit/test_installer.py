@@ -188,7 +188,6 @@ class TestUninstallWaydroid:
 
 # ── _stage_images ─────────────────────────────────────────────────────────────
 
-_PATCH_BUNDLED = "waydroid_toolkit.modules.installer.bundled_apps.install_bundled_apps"
 _PATCH_RUN     = "waydroid_toolkit.modules.installer.installer.subprocess.run"
 _PATCH_ROOT    = "waydroid_toolkit.modules.installer.installer.require_root"
 _PATCH_LINK    = "waydroid_toolkit.modules.installer.installer.os.link"

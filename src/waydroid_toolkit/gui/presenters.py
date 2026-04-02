@@ -1,11 +1,11 @@
 """GUI presenter functions — pure data-gathering logic extracted from page classes.
 
 Each function collects the data a page needs to display and returns it as a
-plain dataclass or dict. This keeps the GTK widget code thin and makes the
+plain dataclass or dict. This keeps the QML bridge code thin and makes the
 business logic testable without a display server.
 
-Pages call these functions from their background threads, then apply the
-returned data to widgets via GLib.idle_add.
+Pages call these functions from their background threads via the bridge's
+``_run()`` helper, then emit the result as a Qt signal.
 """
 
 from __future__ import annotations

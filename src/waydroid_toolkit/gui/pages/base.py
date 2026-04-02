@@ -1,4 +1,4 @@
-"""Base Qt Widget page — replaces GTK BasePage(Gtk.Box).
+"""Base Qt Widget page.
 
 All data-heavy pages that use QTableView/QListView inherit from WdtPage.
 Provides:

@@ -148,3 +148,5 @@ def run(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(run())
+
+main = run  # entry point alias for pyproject.toml gui_scripts

@@ -11,7 +11,7 @@
 - [x] Performance tuning (ZRAM, CPU governor, GameMode)
 - [x] Maintenance tools (display, screenshot, logcat, file transfer, debloat)
 - [x] Full CLI (`wdt`) with all subcommands
-- [x] Unit test suite (519 tests)
+- [x] Unit test suite (pytest, pytest-cov)
 
 ## v0.2 — Feature complete ✅
 

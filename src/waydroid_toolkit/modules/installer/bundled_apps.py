@@ -32,7 +32,6 @@ _CACHE_DIR = Path("/tmp/waydroid-toolkit/bundled")
 
 
 @dataclass
-@dataclass
 class _DirectApp:
     """App with a fixed, stable download URL."""
     name: str
