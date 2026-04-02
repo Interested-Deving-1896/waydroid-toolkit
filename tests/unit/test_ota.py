@@ -12,12 +12,12 @@ import pytest
 
 from waydroid_toolkit.modules.images.ota import (
     OtaEntry,
-    _sha256,
     check_updates,
     download_image,
     download_updates,
     fetch_manifest,
 )
+from waydroid_toolkit.utils.net import verify_sha256
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,14 +124,19 @@ class TestCheckUpdates:
         assert vendor_info.channel == "vendor"
 
 
-# ── _sha256 ───────────────────────────────────────────────────────────────────
+# ── verify_sha256 (via net.py) ────────────────────────────────────────────────
 
-class TestSha256:
+class TestVerifySha256:
     def test_matches_known_hash(self, tmp_path: Path) -> None:
         f = tmp_path / "data.bin"
         f.write_bytes(b"hello")
         expected = hashlib.sha256(b"hello").hexdigest()
-        assert _sha256(f) == expected
+        assert verify_sha256(f, expected) is True
+
+    def test_returns_false_on_mismatch(self, tmp_path: Path) -> None:
+        f = tmp_path / "data.bin"
+        f.write_bytes(b"hello")
+        assert verify_sha256(f, "wronghash") is False
 
 
 # ── download_image ────────────────────────────────────────────────────────────

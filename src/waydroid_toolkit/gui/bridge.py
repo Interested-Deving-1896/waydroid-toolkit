@@ -401,16 +401,20 @@ class BackupBridge(WdtBridgeBase):
 # ── Images bridge ─────────────────────────────────────────────────────────────
 
 class ImagesBridge(WdtBridgeBase):
-    """Exposes image profile management to QML."""
+    """Exposes image profile management and OTA updates to QML."""
 
-    imagesChanged = Signal()
+    imagesChanged    = Signal()
+    updateInfoReady  = Signal("QVariantList")   # list of {channel, current, latest, available}
+    downloadProgress = Signal(str)              # progress messages during download
+    downloadDone     = Signal(bool, str)        # (success, message)
 
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
         self._images: list[dict] = []
 
     @Property("QVariantList", notify=imagesChanged)
-    def images(self) -> list: return self._images
+    def images(self) -> list:
+        return self._images
 
     @Slot()
     def refresh(self) -> None:
@@ -430,6 +434,46 @@ class ImagesBridge(WdtBridgeBase):
             from waydroid_toolkit.modules.images.manager import activate_image
             activate_image(name)
         self._run(_do, on_done=lambda _: self.refresh())
+
+    @Slot()
+    def checkUpdate(self) -> None:
+        """Fetch both OTA channels and emit updateInfoReady with the results."""
+        def _do() -> list:
+            from waydroid_toolkit.modules.images.ota import check_updates
+            sys_info, vendor_info = check_updates()
+            result = []
+            for info in (sys_info, vendor_info):
+                result.append({
+                    "channel":   info.channel,
+                    "current":   str(info.current_datetime) if info.current_datetime else "none",
+                    "latest":    str(info.latest.datetime) if info.latest else "unavailable",
+                    "available": info.update_available,
+                })
+            return result
+
+        self._run(_do, on_done=lambda data: self.updateInfoReady.emit(data))
+
+    @Slot(str)
+    def downloadImages(self, destDir: str) -> None:
+        """Download available OTA images into *destDir*, emitting progress messages."""
+        def _do() -> tuple:
+            from pathlib import Path
+
+            from waydroid_toolkit.modules.images.ota import download_updates
+            sys_path, vendor_path = download_updates(
+                dest_dir=Path(destDir),
+                progress=lambda msg: self.downloadProgress.emit(msg),
+            )
+            downloaded = [p.name for p in (sys_path, vendor_path) if p is not None]
+            if downloaded:
+                return True, "Downloaded: " + ", ".join(downloaded)
+            return True, "Images are already up to date."
+
+        def _finish(result: tuple) -> None:
+            ok, msg = result
+            self.downloadDone.emit(ok, msg)
+
+        self._run(_do, on_done=_finish)
 
 
 # ── Maintenance bridge ────────────────────────────────────────────────────────

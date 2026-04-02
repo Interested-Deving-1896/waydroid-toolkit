@@ -12,9 +12,6 @@ Page {
         function onScreenshotSaved(path) {
             applicationWindow.showToast("Screenshot saved: " + path, false)
         }
-        function onLogcatOutput(output) {
-            logcatArea.text = output
-        }
     }
 
     ScrollView {
@@ -51,36 +48,15 @@ Page {
 
                 ActionRow {
                     text: "Logcat"
-                    subtitle: "Fetch recent Android log output"
+                    subtitle: "View live Android log output"
                     trailing: Component {
                         Button {
-                            text: "Fetch"
+                            text: "Open"
                             flat: true
                             Material.accent: Material.Teal
-                            onClicked: maintenanceBridge.startLogcat()
+                            onClicked: pageStack.replace(
+                                Qt.resolvedUrl("LogcatPage.qml"))
                         }
-                    }
-                }
-            }
-
-            // Logcat output
-            SettingsGroup {
-                title: "Log output"
-                Layout.fillWidth: true
-                visible: logcatArea.text !== ""
-
-                ScrollView {
-                    width: parent.width
-                    height: 300
-                    clip: true
-
-                    TextArea {
-                        id: logcatArea
-                        readOnly: true
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        wrapMode: Text.NoWrap
-                        background: null
                     }
                 }
             }

@@ -24,7 +24,6 @@ file that is extracted directly into the target images directory.
 from __future__ import annotations
 
 import configparser
-import hashlib
 import json
 import subprocess
 import tempfile
@@ -35,6 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waydroid_toolkit.core.waydroid import WaydroidConfig
+from waydroid_toolkit.utils.net import verify_sha256
 
 _CFG_PATH = Path("/var/lib/waydroid/waydroid.cfg")
 _DOWNLOAD_TIMEOUT = 30  # seconds for the manifest fetch
@@ -110,14 +110,6 @@ def check_updates(cfg: WaydroidConfig | None = None) -> tuple[UpdateInfo, Update
 
 # ── Download helpers ──────────────────────────────────────────────────────────
 
-def _sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def _download_with_progress(
     url: str,
     dest: Path,
@@ -181,12 +173,9 @@ def download_image(
 
         if progress:
             progress("Verifying SHA-256…")
-        actual = _sha256(zip_path)
-        if actual != entry.sha256:
+        if not verify_sha256(zip_path, entry.sha256):
             raise RuntimeError(
-                f"SHA-256 mismatch for {entry.filename}:\n"
-                f"  expected: {entry.sha256}\n"
-                f"  got:      {actual}\n"
+                f"SHA-256 mismatch for {entry.filename}.\n"
                 "The download may be corrupt. Try again."
             )
 
