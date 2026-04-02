@@ -15,11 +15,12 @@ Typical usage
 from .base import BackendInfo, BackendType, ContainerBackend, ContainerState
 from .incus_backend import IncusBackend
 from .lxc_backend import LxcBackend
-from .selector import detect, get_active, list_available, set_active
+from .selector import ConfigError, detect, get_active, list_available, set_active
 
 __all__ = [
     "BackendInfo",
     "BackendType",
+    "ConfigError",
     "ContainerBackend",
     "ContainerState",
     "IncusBackend",

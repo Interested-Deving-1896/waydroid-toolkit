@@ -7,6 +7,7 @@ Commands:
     status        Show Waydroid runtime status
     install       Install Waydroid on this system
     build         Build an Android image via penguins-eggs
+    gui           Launch the Qt/QML graphical interface
     backend       Select and inspect the container backend (LXC or Incus)
     extensions    Manage extensions (GApps, Magisk, ARM translation, microG)
     images        Manage image profiles
@@ -39,6 +40,23 @@ console = Console()
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 
+def _gui_cmd() -> click.Command:
+    @click.command("gui")
+    def _cmd() -> None:
+        """Launch the Qt/QML graphical interface."""
+        import sys
+        try:
+            from waydroid_toolkit.gui.app import run
+        except ImportError as exc:
+            Console().print(
+                f"[red]Qt GUI dependencies not installed:[/red] {exc}\n"
+                "Install with: pip install 'waydroid-toolkit[gui]'"
+            )
+            raise SystemExit(1) from exc
+        sys.exit(run())
+    return _cmd
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__, "-v", "--version", prog_name="wdt")
 def cli() -> None:
@@ -48,6 +66,7 @@ def cli() -> None:
 cli.add_command(status.cmd, name="status")
 cli.add_command(install.cmd, name="install")
 cli.add_command(build.cmd, name="build")
+cli.add_command(_gui_cmd(), name="gui")
 cli.add_command(backend.cmd, name="backend")
 cli.add_command(extensions.cmd, name="extensions")
 cli.add_command(images.cmd, name="images")

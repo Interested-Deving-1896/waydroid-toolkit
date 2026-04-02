@@ -56,3 +56,6 @@
 	path = vendor/penguins-eggs
 	url = https://github.com/Interested-Deving-1896/penguins-eggs
 	branch = all-features
+[submodule "vendor/wadb"]
+	path = vendor/wadb
+	url = https://github.com/GoogleChromeLabs/wadb

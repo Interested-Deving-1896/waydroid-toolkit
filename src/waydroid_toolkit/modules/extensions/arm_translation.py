@@ -4,10 +4,18 @@ libhoudini: Intel's translation layer, better for Intel/AMD x86 hosts.
 libndk:     Google's NDK translation, better performance on AMD.
 
 Sources mirror casualsnek/waydroid_script which pulls from WSA and guybrush firmware.
+
+Native-host guard
+-----------------
+ARM translation is only meaningful on x86/x86_64 hosts. Installing it on an
+ARM host (e.g. Raspberry Pi, Apple Silicon via box64) would replace native
+ARM execution with a translation layer, causing a significant performance
+regression. Both extensions raise RuntimeError when the host CPU is ARM.
 """
 
 from __future__ import annotations
 
+import platform
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -28,6 +36,29 @@ _NDK_URL = (
 _HOUDINI_MARKER = Path("/var/lib/waydroid/overlay/system/lib/libhoudini.so")
 _NDK_MARKER = Path("/var/lib/waydroid/overlay/system/lib/libndk_translation.so")
 
+# ARM machine types — translation is harmful on these hosts
+_ARM_MACHINES = {"aarch64", "armv7l", "armv8l", "arm64"}
+
+
+def _host_machine() -> str:
+    """Return the host machine type (e.g. 'x86_64', 'aarch64')."""
+    return platform.machine().lower()
+
+
+def _require_x86_host(extension_name: str) -> None:
+    """Raise RuntimeError if the host is ARM-based.
+
+    Installing ARM translation on an ARM host replaces native execution with
+    a translation layer, causing a severe performance regression.
+    """
+    machine = _host_machine()
+    if machine in _ARM_MACHINES:
+        raise RuntimeError(
+            f"{extension_name} is an ARM-to-x86 translation layer and must not be "
+            f"installed on an ARM host (detected: {machine}). "
+            "Your Waydroid container already runs ARM binaries natively."
+        )
+
 
 class LibhoudiniExtension(Extension):
     @property
@@ -45,9 +76,11 @@ class LibhoudiniExtension(Extension):
 
     def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing libhoudini")
+        _require_x86_host("libhoudini")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled.")
         cache = Path("/tmp/waydroid-toolkit/houdini.zip")
+        cache.parent.mkdir(parents=True, exist_ok=True)
         if progress:
             progress("Downloading libhoudini...")
         download(_HOUDINI_URL, cache)
@@ -87,9 +120,11 @@ class LibndkExtension(Extension):
 
     def install(self, progress: Callable[[str], None] | None = None) -> None:
         require_root("Installing libndk")
+        _require_x86_host("libndk")
         if not is_overlay_enabled():
             raise RuntimeError("mount_overlays must be enabled.")
         cache = Path("/tmp/waydroid-toolkit/ndk_translation.zip")
+        cache.parent.mkdir(parents=True, exist_ok=True)
         if progress:
             progress("Downloading libndk...")
         download(_NDK_URL, cache)

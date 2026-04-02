@@ -1,193 +1,189 @@
-"""Tests for BasePage toast notification helpers.
+"""Tests for WdtPage toast notification helpers.
 
-gi (PyGObject) is not available in CI. This module stubs the entire gi
-import chain before importing any GUI code, so the toast logic can be
-tested without a display server or GTK installation.
+Qt is not available in CI. This module stubs the entire qt_compat module
+and the Qt classes it re-exports so that pages.base can be imported and
+tested without a display server or Qt installation.
 """
 
 from __future__ import annotations
 
 import sys
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock  # noqa: F401
+
+# ── Minimal Signal implementation ─────────────────────────────────────────────
+
+class _FakeSignal:
+    """Minimal Signal that supports connect/emit without Qt."""
+
+    def __init__(self, *types_):
+        self._types = types_
+        self._slots: list = []
+
+    def connect(self, slot):
+        self._slots.append(slot)
+
+    def emit(self, *args):
+        for slot in self._slots:
+            slot(*args)
+
+    def __call__(self, *types_):
+        # Called as Signal(str, bool) at class-body time -> return new instance
+        return _FakeSignal(*types_)
 
 
-def _install_gi_stubs() -> None:
-    """Insert minimal gi stubs into sys.modules so GUI imports succeed."""
-    if "gi" in sys.modules:
-        return
-
-    gi_mod = types.ModuleType("gi")
-    gi_mod.require_version = lambda *a: None  # type: ignore[attr-defined]
-
-    # Build a fake Adw.Toast that tracks title and timeout
-    class FakeToast:
-        def __init__(self, title: str = "", timeout: int = 3) -> None:
-            self._title = title
-            self._timeout = timeout
-
-        def get_title(self) -> str:
-            return self._title
-
-        def get_timeout(self) -> int:
-            return self._timeout
-
-    class FakeToastOverlay:
-        def __init__(self) -> None:
-            self.toasts: list[FakeToast] = []
-
-        def add_toast(self, toast: FakeToast) -> None:
-            self.toasts.append(toast)
-
-        def set_child(self, _child: object) -> None:
-            pass
-
-    adw_mod = types.ModuleType("gi.repository.Adw")
-    adw_mod.Toast = FakeToast  # type: ignore[attr-defined]
-    adw_mod.ToastOverlay = FakeToastOverlay  # type: ignore[attr-defined]
-    adw_mod.Application = MagicMock  # type: ignore[attr-defined]
-    adw_mod.ApplicationWindow = MagicMock  # type: ignore[attr-defined]
-    adw_mod.HeaderBar = MagicMock  # type: ignore[attr-defined]
-    adw_mod.NavigationSplitView = MagicMock  # type: ignore[attr-defined]
-    adw_mod.NavigationPage = MagicMock  # type: ignore[attr-defined]
-    adw_mod.ToolbarView = MagicMock  # type: ignore[attr-defined]
-    adw_mod.WindowTitle = MagicMock  # type: ignore[attr-defined]
-    adw_mod.PreferencesGroup = MagicMock  # type: ignore[attr-defined]
-    adw_mod.ActionRow = MagicMock  # type: ignore[attr-defined]
-
-    gtk_mod = types.ModuleType("gi.repository.Gtk")
-    gtk_mod.Box = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Button = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Label = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.ListBox = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.ListBoxRow = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.ScrolledWindow = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Stack = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Widget = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Orientation = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.Align = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.PolicyType = MagicMock  # type: ignore[attr-defined]
-    gtk_mod.SelectionMode = MagicMock  # type: ignore[attr-defined]
-
-    repo_mod = types.ModuleType("gi.repository")
-    repo_mod.Adw = adw_mod  # type: ignore[attr-defined]
-    repo_mod.Gtk = gtk_mod  # type: ignore[attr-defined]
-    repo_mod.Gio = MagicMock()  # type: ignore[attr-defined]
-
-    gi_mod.repository = repo_mod  # type: ignore[attr-defined]
-
-    sys.modules["gi"] = gi_mod
-    sys.modules["gi.repository"] = repo_mod
-    sys.modules["gi.repository.Adw"] = adw_mod
-    sys.modules["gi.repository.Gtk"] = gtk_mod
-    sys.modules["gi.repository.Gio"] = MagicMock()
+_signal_factory = _FakeSignal()
 
 
-_install_gi_stubs()
+# ── Stub Qt classes used by pages/base.py ─────────────────────────────────────
 
-# Now safe to import GUI modules
-import waydroid_toolkit.gui.pages.base as base_module  # noqa: E402
-from waydroid_toolkit.gui.pages.base import BasePage, register_toast_overlay  # noqa: E402
+class _FakeQObject:
+    pass
+
+
+class _FakeQRunnable:
+    def run(self):
+        pass
+
+
+class _FakeQThreadPool:
+    @staticmethod
+    def globalInstance():
+        return _FakeQThreadPool()
+
+    def start(self, runnable):
+        pass
+
+
+class _FakeQWidget:
+    def __init__(self, *a, **kw):
+        pass
+
+
+class _FakeQLabel:
+    def __init__(self, *a, **kw):
+        pass
+
+    def font(self):
+        return MagicMock()
+
+    def setFont(self, f):
+        pass
+
+    def setWordWrap(self, v):
+        pass
+
+    def setStyleSheet(self, s):
+        pass
+
+
+class _FakeQVBoxLayout:
+    def __init__(self, *a, **kw):
+        pass
+
+    def setContentsMargins(self, *a):
+        pass
+
+    def setSpacing(self, v):
+        pass
+
+    def addWidget(self, w):
+        pass
+
+    def addLayout(self, layout):
+        pass
+
+    def addStretch(self):
+        pass
+
+
+# ── Build fake QtCore / QtWidgets modules ─────────────────────────────────────
+
+_qtcore = types.SimpleNamespace(
+    QObject=_FakeQObject,
+    QRunnable=_FakeQRunnable,
+    QThreadPool=_FakeQThreadPool,
+    Signal=_signal_factory,
+    Slot=lambda *a, **kw: (lambda f: f),
+    Property=lambda *a, **kw: (lambda f: f),
+)
+
+_qtwidgets = types.SimpleNamespace(
+    QWidget=_FakeQWidget,
+    QLabel=_FakeQLabel,
+    QVBoxLayout=_FakeQVBoxLayout,
+    QAbstractTableModel=MagicMock,
+    QTableView=MagicMock,
+    QHeaderView=MagicMock,
+    QSizePolicy=MagicMock,
+)
+
+
+# ── Stub the qt_compat module entirely ───────────────────────────────────────
+
+_qt_compat_stub = types.ModuleType("waydroid_toolkit.gui.qt_compat")
+_qt_compat_stub.QtCore = _qtcore  # type: ignore[attr-defined]
+_qt_compat_stub.QtWidgets = _qtwidgets  # type: ignore[attr-defined]
+_qt_compat_stub.Signal = _signal_factory  # type: ignore[attr-defined]
+_qt_compat_stub.Slot = lambda *a, **kw: (lambda f: f)  # type: ignore[attr-defined]
+_qt_compat_stub.Property = lambda *a, **kw: (lambda f: f)  # type: ignore[attr-defined]
+_qt_compat_stub.QT_BINDING = "stub"  # type: ignore[attr-defined]
+_qt_compat_stub.HAS_WEBENGINE = False  # type: ignore[attr-defined]
+
+# Inject before any gui module is imported
+sys.modules["waydroid_toolkit.gui.qt_compat"] = _qt_compat_stub
+
+# Remove any previously cached gui imports
+for _mod in list(sys.modules):
+    if _mod.startswith("waydroid_toolkit.gui.pages"):
+        del sys.modules[_mod]
+
+from waydroid_toolkit.gui.pages.base import WdtPage  # noqa: E402
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _make_page() -> BasePage:
-    """Return a BasePage instance bypassing GTK __init__."""
-    page = object.__new__(BasePage)
+def _make_page() -> WdtPage:
+    """Return a WdtPage instance bypassing Qt __init__."""
+    page = object.__new__(WdtPage)
+    # Attach a live FakeSignal so connect/emit work
+    page.toastRequested = _signal_factory(str, bool)
     return page
 
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
-class TestRegisterToastOverlay:
-    def test_sets_module_variable(self) -> None:
-        mock_overlay = MagicMock()
-        register_toast_overlay(mock_overlay)
-        assert base_module._toast_overlay is mock_overlay
-
-    def test_can_be_overwritten(self) -> None:
-        first = MagicMock()
-        second = MagicMock()
-        register_toast_overlay(first)
-        register_toast_overlay(second)
-        assert base_module._toast_overlay is second
-
-
 class TestShowToast:
-    def setup_method(self) -> None:
-        self._saved = base_module._toast_overlay
-        base_module._toast_overlay = None
-
-    def teardown_method(self) -> None:
-        base_module._toast_overlay = self._saved
-
-    def test_noop_when_no_overlay_registered(self) -> None:
+    def test_emits_signal_with_message(self) -> None:
         page = _make_page()
-        page._show_toast("hello")  # must not raise
-
-    def test_calls_add_toast_on_overlay(self) -> None:
-        mock_overlay = MagicMock()
-        base_module._toast_overlay = mock_overlay
-        page = _make_page()
-        page._show_toast("hello")
-        mock_overlay.add_toast.assert_called_once()
-
-    def test_toast_carries_message(self) -> None:
         received: list = []
-        mock_overlay = MagicMock()
-        mock_overlay.add_toast.side_effect = received.append
-        base_module._toast_overlay = mock_overlay
-        page = _make_page()
-        page._show_toast("my message")
-        assert received[0].get_title() == "my message"
+        page.toastRequested.connect(lambda msg, err: received.append((msg, err)))
+        page.show_toast("hello")
+        assert received == [("hello", False)]
 
-    def test_default_timeout_is_3(self) -> None:
+    def test_error_flag_false_by_default(self) -> None:
+        page = _make_page()
         received: list = []
-        mock_overlay = MagicMock()
-        mock_overlay.add_toast.side_effect = received.append
-        base_module._toast_overlay = mock_overlay
-        page = _make_page()
-        page._show_toast("msg")
-        assert received[0].get_timeout() == 3
+        page.toastRequested.connect(lambda msg, err: received.append(err))
+        page.show_toast("msg")
+        assert received == [False]
 
-    def test_custom_timeout_respected(self) -> None:
+    def test_error_flag_true_when_requested(self) -> None:
+        page = _make_page()
         received: list = []
-        mock_overlay = MagicMock()
-        mock_overlay.add_toast.side_effect = received.append
-        base_module._toast_overlay = mock_overlay
+        page.toastRequested.connect(lambda msg, err: received.append(err))
+        page.show_toast("oops", error=True)
+        assert received == [True]
+
+    def test_multiple_slots_all_called(self) -> None:
         page = _make_page()
-        page._show_toast("msg", timeout=10)
-        assert received[0].get_timeout() == 10
+        a: list = []
+        b: list = []
+        page.toastRequested.connect(lambda msg, err: a.append(msg))
+        page.toastRequested.connect(lambda msg, err: b.append(msg))
+        page.show_toast("broadcast")
+        assert a == ["broadcast"]
+        assert b == ["broadcast"]
 
-
-class TestShowError:
-    def setup_method(self) -> None:
-        self._saved = base_module._toast_overlay
-        base_module._toast_overlay = None
-
-    def teardown_method(self) -> None:
-        base_module._toast_overlay = self._saved
-
-    def test_prefixes_error_label(self) -> None:
-        received: list = []
-        mock_overlay = MagicMock()
-        mock_overlay.add_toast.side_effect = received.append
-        base_module._toast_overlay = mock_overlay
+    def test_no_slots_does_not_raise(self) -> None:
         page = _make_page()
-        page._show_error("something went wrong")
-        title = received[0].get_title()
-        assert title.startswith("Error:")
-        assert "something went wrong" in title
-
-    def test_uses_timeout_5(self) -> None:
-        received: list = []
-        mock_overlay = MagicMock()
-        mock_overlay.add_toast.side_effect = received.append
-        base_module._toast_overlay = mock_overlay
-        page = _make_page()
-        page._show_error("oops")
-        assert received[0].get_timeout() == 5
-
-    def test_noop_when_no_overlay(self) -> None:
-        page = _make_page()
-        page._show_error("oops")  # must not raise
+        page.show_toast("silent")  # must not raise

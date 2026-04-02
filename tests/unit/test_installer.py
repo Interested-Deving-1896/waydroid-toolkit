@@ -204,22 +204,27 @@ class TestStageImages:
         vendor.write_bytes(b"vendor")
 
         with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)) as mock_run:
-            with patch(_PATCH_LINK) as mock_link:
-                _stage_images(system, vendor)
+            _stage_images(system, vendor)
 
         run_cmds = [" ".join(c[0][0]) for c in mock_run.call_args_list]
         assert any("mkdir" in c for c in run_cmds)
         assert any("system.img" in c for c in run_cmds)
         assert any("vendor.img" in c for c in run_cmds)
-        assert mock_link.call_count == 2
+        # Primary path is sudo ln -s (symlink)
+        assert any("ln" in c for c in run_cmds)
 
-    def test_falls_back_to_copy_on_link_error(self, tmp_path: Path) -> None:
+    def test_falls_back_to_copy_on_symlink_error(self, tmp_path: Path) -> None:
         system = tmp_path / "system.img"
         vendor = tmp_path / "vendor.img"
         system.write_bytes(b"system")
         vendor.write_bytes(b"vendor")
 
-        with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)) as mock_run:
+        def _run_side_effect(cmd, **kwargs):
+            if "ln" in cmd:
+                raise subprocess.CalledProcessError(1, cmd)
+            return MagicMock(returncode=0)
+
+        with patch(_PATCH_RUN, side_effect=_run_side_effect) as mock_run:
             with patch(_PATCH_LINK, side_effect=OSError("cross-device")):
                 _stage_images(system, vendor)
 
@@ -234,8 +239,7 @@ class TestStageImages:
         messages: list[str] = []
 
         with patch(_PATCH_RUN, return_value=MagicMock(returncode=0)):
-            with patch(_PATCH_LINK):
-                _stage_images(system, vendor, progress=messages.append)
+            _stage_images(system, vendor, progress=messages.append)
 
         assert any("system.img" in m for m in messages)
         assert any("vendor.img" in m for m in messages)

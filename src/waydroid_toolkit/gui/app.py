@@ -1,141 +1,144 @@
-"""WayDroid Toolkit GTK4/Adwaita GUI application.
+"""WayDroid Toolkit Qt/QML application entry point.
 
-Requires: PyGObject >= 3.44, libadwaita >= 1.4
+Supports both PySide6 and PyQt6 via the qt_compat shim.
+Launches a QML ApplicationWindow (Material style) with bridge objects
+registered as context properties.
 
 Launch via:
-    waydroid-toolkit
+    wdt gui
 or:
     python -m waydroid_toolkit.gui.app
+
+WebEngine / wadb terminal
+-------------------------
+When PySide6-WebEngine (or PyQt6-WebEngine) is installed, the Terminal
+page loads a local HTML page that uses the wadb TypeScript library over
+WebUSB for a full ADB shell experience. The wadb HTML is built from
+vendor/wadb and served from a QWebEngineUrlSchemeHandler on the
+wdt:// scheme so it can access WebUSB without CORS restrictions.
+
+When WebEngine is not installed, the Terminal page falls back to showing
+logcat output via the native adb binary.
 """
 
 from __future__ import annotations
 
+import os
 import sys
-
-try:
-    import gi
-    gi.require_version("Gtk", "4.0")
-    gi.require_version("Adw", "1")
-    from gi.repository import Adw, Gio, Gtk
-except (ImportError, ValueError) as exc:
-    print(
-        f"GUI dependencies not available: {exc}\n"
-        "Install with: pip install waydroid-toolkit[gui]\n"
-        "and ensure libgtk-4 and libadwaita are installed on your system.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+from pathlib import Path
 
 from waydroid_toolkit import __version__
+from waydroid_toolkit.gui.qt_compat import (
+    HAS_WEBENGINE,
+    QT_BINDING,
+    QtCore,
+    QtQml,
+    QtWidgets,
+    qt_exec,
+)
 
-from .pages.backend import BackendPage
-from .pages.backup import BackupPage
-from .pages.base import register_toast_overlay
-from .pages.extensions import ExtensionsPage
-from .pages.images import ImagesPage
-from .pages.maintenance import MaintenancePage
-from .pages.packages import PackagesPage
-from .pages.performance import PerformancePage
-from .pages.status import StatusPage
-
-
-class WayDroidToolkitApp(Adw.Application):
-    def __init__(self) -> None:
-        super().__init__(
-            application_id="id.waydro.toolkit",
-            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
-        )
-        self.connect("activate", self._on_activate)
-
-    def _on_activate(self, app: Adw.Application) -> None:
-        win = MainWindow(application=app)
-        win.present()
+# QML source root
+_QML_DIR = Path(__file__).parent / "qml"
+# wadb built HTML (vendor/wadb/demo/index.html or dist/)
+_WADB_DIR = Path(__file__).parent.parent.parent.parent.parent / "vendor" / "wadb"
 
 
-class MainWindow(Adw.ApplicationWindow):
-    def __init__(self, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        super().__init__(
-            title=f"WayDroid Toolkit {__version__}",
-            default_width=960,
-            default_height=680,
-            **kwargs,
-        )
-        self._build_ui()
-
-    def _build_ui(self) -> None:
-        # Root split view: sidebar + content
-        split = Adw.NavigationSplitView()
-        self.set_content(split)
-
-        # ── Sidebar ──────────────────────────────────────────────────────────
-        sidebar_nav = Adw.NavigationPage(title="WayDroid Toolkit")
-        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sidebar_nav.set_child(sidebar_box)
-
-        header = Adw.HeaderBar()
-        sidebar_box.append(header)
-
-        self._list = Gtk.ListBox(css_classes=["navigation-sidebar"])
-        self._list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self._list.connect("row-selected", self._on_nav_selected)
-
-        scroll = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
-        scroll.set_child(self._list)
-        sidebar_box.append(scroll)
-
-        split.set_sidebar(sidebar_nav)
-
-        # ── Content stack ─────────────────────────────────────────────────────
-        self._stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-
-        # Wrap the stack in a ToastOverlay so any page can post notifications.
-        self._toast_overlay = Adw.ToastOverlay()
-        self._toast_overlay.set_child(self._stack)
-        register_toast_overlay(self._toast_overlay)
-
-        content_nav = Adw.NavigationPage(title="")
-        content_nav.set_child(self._toast_overlay)
-        split.set_content(content_nav)
-
-        # ── Pages ─────────────────────────────────────────────────────────────
-        self._pages: list[tuple[str, str, Gtk.Widget]] = [
-            ("status",      "Status",       StatusPage()),
-            ("backend",     "Backend",      BackendPage()),
-            ("extensions",  "Extensions",   ExtensionsPage()),
-            ("images",      "Images",       ImagesPage()),
-            ("packages",    "Packages",     PackagesPage()),
-            ("backup",      "Backup",       BackupPage()),
-            ("performance", "Performance",  PerformancePage()),
-            ("maintenance", "Maintenance",  MaintenancePage()),
-        ]
-
-        for page_id, label, widget in self._pages:
-            self._stack.add_named(widget, page_id)
-            row = Gtk.ListBoxRow()
-            row_label = Gtk.Label(
-                label=label,
-                xalign=0,
-                margin_start=12,
-                margin_end=12,
-                margin_top=8,
-                margin_bottom=8,
-            )
-            row.set_child(row_label)
-            row.set_name(page_id)
-            self._list.append(row)
-
-        # Select first row by default
-        self._list.select_row(self._list.get_row_at_index(0))
-
-    def _on_nav_selected(self, listbox: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
-        if row is not None:
-            self._stack.set_visible_child_name(row.get_name())
+def _wadb_html_url() -> str:
+    """Return the URL for the wadb terminal HTML page, or empty string."""
+    candidates = [
+        _WADB_DIR / "demo" / "index.html",
+        _WADB_DIR / "dist" / "index.html",
+    ]
+    for path in candidates:
+        if path.exists():
+            return path.as_uri()
+    return ""
 
 
-def main() -> None:
-    app = WayDroidToolkitApp()
-    sys.exit(app.run(sys.argv))
+def _setup_webengine() -> None:
+    """Initialise QtWebEngine before QApplication is created (required)."""
+    if not HAS_WEBENGINE:
+        return
+    from waydroid_toolkit.gui.qt_compat import QtWebEngineQuick
+    if QtWebEngineQuick is not None:
+        QtWebEngineQuick.initialize()
+
+
+def _register_bridges(engine: QtQml.QQmlApplicationEngine) -> None:  # type: ignore[name-defined]
+    """Instantiate all bridge objects and expose them as QML context properties."""
+    from waydroid_toolkit.gui.bridge import (
+        BackendBridge,
+        BackupBridge,
+        ExtensionsBridge,
+        ImagesBridge,
+        MaintenanceBridge,
+        PackagesBridge,
+        PerformanceBridge,
+        StatusBridge,
+    )
+
+    ctx = engine.rootContext()
+
+    bridges = {
+        "statusBridge":      StatusBridge(),
+        "backendBridge":     BackendBridge(),
+        "extensionsBridge":  ExtensionsBridge(),
+        "packagesBridge":    PackagesBridge(),
+        "performanceBridge": PerformanceBridge(),
+        "backupBridge":      BackupBridge(),
+        "imagesBridge":      ImagesBridge(),
+        "maintenanceBridge": MaintenanceBridge(),
+    }
+
+    for name, bridge in bridges.items():
+        ctx.setContextProperty(name, bridge)
+
+    # App metadata
+    ctx.setContextProperty("appVersion", f"v{__version__}")
+    ctx.setContextProperty("qtBinding", QT_BINDING)
+    ctx.setContextProperty("_wadbUrl", _wadb_html_url())
+
+
+def run(argv: list[str] | None = None) -> int:
+    """Start the Qt GUI application. Returns the process exit code."""
+    if argv is None:
+        argv = sys.argv
+
+    # WebEngine must be initialised before QApplication
+    _setup_webengine()
+
+    # High-DPI scaling (Qt6 enables this by default, but be explicit)
+    os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
+
+    app = QtWidgets.QApplication(argv)
+    app.setApplicationName("WayDroid Toolkit")
+    app.setApplicationVersion(__version__)
+    app.setOrganizationName("waydroid-toolkit")
+
+    # Material style is set per-component in QML via Material.theme/accent.
+    # Set the Qt Quick Controls style globally here.
+    os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Material")
+
+    engine = QtQml.QQmlApplicationEngine()
+
+    # Register QML import path so components/ and pages/ resolve correctly
+    engine.addImportPath(str(_QML_DIR))
+
+    _register_bridges(engine)
+
+    main_qml = _QML_DIR / "Main.qml"
+    if not main_qml.exists():
+        print(f"ERROR: QML entry point not found: {main_qml}", file=sys.stderr)
+        return 1
+
+    engine.load(QtCore.QUrl.fromLocalFile(str(main_qml)))
+
+    if not engine.rootObjects():
+        print("ERROR: Failed to load QML — check for syntax errors.", file=sys.stderr)
+        return 1
+
+    return qt_exec(app)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(run())

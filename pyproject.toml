@@ -18,7 +18,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Qt GUI — PySide6 is tried first; PyQt6 is the fallback (see gui/qt_compat.py)
 gui = [
+    "PySide6>=6.6",
+    "qtpy>=2.4",
+]
+# PyQt6 alternative binding (install instead of PySide6 if preferred)
+gui-pyqt = [
+    "PyQt6>=6.6",
+    "PyQt6-WebEngine>=6.6",
+    "qtpy>=2.4",
+]
+# GTK legacy GUI (kept for reference; not actively maintained)
+gui-gtk = [
     "PyGObject>=3.44",
 ]
 dev = [
@@ -47,7 +59,7 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 ignore = [
-    "E402",   # module-level import not at top — unavoidable after gi.require_version()
+    "E402",   # module-level import not at top — unavoidable in Qt compat shim
 ]
 
 [tool.mypy]

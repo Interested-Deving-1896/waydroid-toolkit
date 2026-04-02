@@ -30,11 +30,43 @@ _BACKENDS: dict[BackendType, type[ContainerBackend]] = {
 }
 
 
+class ConfigError(ValueError):
+    """Raised when the toolkit config file is present but invalid."""
+
+
 def _read_config() -> dict:
     if not _CONFIG_PATH.exists():
         return {}
-    with _CONFIG_PATH.open("rb") as fh:
-        return tomllib.load(fh)
+    try:
+        with _CONFIG_PATH.open("rb") as fh:
+            data = tomllib.load(fh)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(
+            f"Config file is not valid TOML: {_CONFIG_PATH}\n"
+            f"  {exc}\n"
+            "Fix or delete the file and try again."
+        ) from exc
+    _validate_config(data)
+    return data
+
+
+def _validate_config(data: dict) -> None:
+    """Raise ConfigError if the config contains unrecognised or invalid values."""
+    container = data.get("container", {})
+    if not isinstance(container, dict):
+        raise ConfigError(
+            f"[container] section in {_CONFIG_PATH} must be a table, "
+            f"got {type(container).__name__}."
+        )
+    backend_name = container.get("backend", "")
+    if backend_name:
+        valid = {bt.value for bt in BackendType}
+        if backend_name.lower() not in valid:
+            raise ConfigError(
+                f"Unknown backend '{backend_name}' in {_CONFIG_PATH}. "
+                f"Valid values: {', '.join(sorted(valid))}. "
+                "Run 'wdt backend list' to see available backends."
+            )
 
 
 def _write_config(data: dict) -> None:

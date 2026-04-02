@@ -138,14 +138,19 @@ def _stage_images(
     vendor_img: Path,
     progress: Callable[[str], None] | None = None,
 ) -> None:
-    """Copy or hard-link system.img and vendor.img into the waydroid-extra dir.
+    """Symlink system.img and vendor.img into the waydroid-extra images dir.
 
     waydroid init checks /etc/waydroid-extra/images/ for pre-installed images
-    before attempting an OTA download. Staging the manifest images there lets
-    waydroid init use them directly.
+    before attempting an OTA download. Staging symlinks there lets waydroid
+    init use the manifest images directly with no copy cost and no filesystem
+    restriction (symlinks work across filesystems and devices).
 
-    Hard-links are used when source and destination are on the same filesystem
-    (instant, no extra disk space). Falls back to a full copy otherwise.
+    waydroid init only reads the images — it never writes back to them — so
+    symlinks are safe for the duration of the init process.
+
+    Fallback chain if symlink creation fails (unusual filesystem restrictions):
+      1. Hard-link (same filesystem, zero copy cost)
+      2. sudo cp --reflink=auto (copy-on-write where supported, else full copy)
     """
     dest = _PREINSTALLED_IMAGES_DIR
     subprocess.run(["sudo", "mkdir", "-p", str(dest)], check=True)
@@ -154,14 +159,20 @@ def _stage_images(
         dst = dest / name
         if progress:
             progress(f"Staging {name} → {dst}")
-        # Remove any existing file first (sudo required — dest is root-owned)
+        # Remove any existing file/symlink first (dest is root-owned)
         subprocess.run(["sudo", "rm", "-f", str(dst)], check=True)
         try:
-            # Try hard-link first (same filesystem, zero copy cost)
-            os.link(src, dst)
-        except OSError:
-            # Cross-filesystem or permission error — fall back to sudo cp
-            subprocess.run(["sudo", "cp", "--reflink=auto", str(src), str(dst)], check=True)
+            # Symlink: zero cost, works across filesystems
+            subprocess.run(["sudo", "ln", "-s", str(src.resolve()), str(dst)], check=True)
+        except subprocess.CalledProcessError:
+            try:
+                # Hard-link: same filesystem only, zero copy cost
+                os.link(src, dst)
+            except OSError:
+                # Last resort: full copy (may be slow for large images)
+                subprocess.run(
+                    ["sudo", "cp", "--reflink=auto", str(src), str(dst)], check=True
+                )
 
 
 def _unstage_images(progress: Callable[[str], None] | None = None) -> None:

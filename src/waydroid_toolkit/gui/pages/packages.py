@@ -1,100 +1,161 @@
-"""Packages page — install APKs and manage F-Droid repos."""
+"""Packages page — Qt Widgets QTableView for package search results.
+
+This page is embedded into the QML PackagesPage via QQuickWidget.
+It provides a sortable, filterable QTableView backed by a QStandardItemModel
+for displaying F-Droid search results — a use case where Qt's model/view
+architecture is more appropriate than a QML ListView.
+"""
 
 from __future__ import annotations
 
-import threading
-from pathlib import Path
-
-import gi
-
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
-
-from waydroid_toolkit.modules.packages import (
-    get_installed_packages,
-    install_apk_url,
-)
-
-from .base import BasePage
+from waydroid_toolkit.gui.pages.base import WdtPage
+from waydroid_toolkit.gui.qt_compat import QtCore, QtWidgets
 
 
-class PackagesPage(BasePage):
-    def __init__(self) -> None:
-        super().__init__("Packages")
-        self._build()
+class PackageTableModel(QtCore.QAbstractTableModel):
+    """Model for F-Droid package search results."""
 
-    def _build(self) -> None:
-        # APK install from URL
-        install_group = self.make_section("Install APK")
-        self._url_entry = Gtk.Entry(placeholder_text="https://… or /path/to/app.apk",
-                                    hexpand=True)
-        install_row = Adw.ActionRow(title="APK source")
-        install_row.add_suffix(self._url_entry)
-        install_btn = Gtk.Button(
-            label="Install", css_classes=["suggested-action"], valign=Gtk.Align.CENTER,
+    HEADERS = ["Name", "Package ID"]
+
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+        super().__init__(parent)
+        self._data: list[dict] = []
+
+    def rowCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
+        return len(self._data)
+
+    def columnCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
+        return len(self.HEADERS)
+
+    def data(
+        self,
+        index: QtCore.QModelIndex,
+        role: int = QtCore.Qt.ItemDataRole.DisplayRole,
+    ) -> object:
+        if not index.isValid() or role != QtCore.Qt.ItemDataRole.DisplayRole:
+            return None
+        row = self._data[index.row()]
+        if index.column() == 0:
+            return row.get("name", "")
+        return row.get("packageName", "")
+
+    def headerData(
+        self,
+        section: int,
+        orientation: QtCore.Qt.Orientation,
+        role: int = QtCore.Qt.ItemDataRole.DisplayRole,
+    ) -> object:
+        if (
+            orientation == QtCore.Qt.Orientation.Horizontal
+            and role == QtCore.Qt.ItemDataRole.DisplayRole
+        ):
+            return self.HEADERS[section]
+        return None
+
+    def set_packages(self, packages: list[dict]) -> None:
+        self.beginResetModel()
+        self._data = packages
+        self.endResetModel()
+
+    def package_at(self, row: int) -> dict:
+        return self._data[row] if 0 <= row < len(self._data) else {}
+
+
+class PackagesWidget(WdtPage):
+    """Qt Widgets package browser with sortable QTableView."""
+
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(
+            title="Packages",
+            subtitle="Search F-Droid repositories and install APKs.",
+            parent=parent,
         )
-        install_btn.connect("clicked", self._on_install)
-        install_row.add_suffix(install_btn)
-        install_group.add(install_row)
+        self._build_packages_ui()
 
-        self._install_status = Gtk.Label(label="", xalign=0, css_classes=["dim-label"])
+    def _build_packages_ui(self) -> None:
+        # Search bar
+        search_row = QtWidgets.QHBoxLayout()
+        self._search_field = QtWidgets.QLineEdit()
+        self._search_field.setPlaceholderText("Search F-Droid repos…")
+        self._search_field.returnPressed.connect(self._on_search)
+        search_btn = QtWidgets.QPushButton("Search")
+        search_btn.clicked.connect(self._on_search)
+        search_row.addWidget(self._search_field)
+        search_row.addWidget(search_btn)
+        self.content_layout.addLayout(search_row)
 
-        # Installed packages
-        pkgs_group = self.make_section("Installed Packages")
-        self._pkgs_list = Gtk.ListBox(
-            css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE,
+        # Table
+        self._model = PackageTableModel()
+        self._proxy = QtCore.QSortFilterProxyModel()
+        self._proxy.setSourceModel(self._model)
+        self._proxy.setFilterCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
+        self._proxy.setFilterKeyColumn(-1)  # filter all columns
+
+        self._table = QtWidgets.QTableView()
+        self._table.setModel(self._proxy)
+        self._table.setSortingEnabled(True)
+        self._table.setSelectionBehavior(
+            QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows
         )
-        pkgs_group.add(self._pkgs_list)
+        self._table.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        self._table.horizontalHeader().setStretchLastSection(True)
+        self._table.verticalHeader().setVisible(False)
+        self._table.doubleClicked.connect(self._on_install)
+        self.content_layout.addWidget(self._table)
 
-        refresh_btn = self.make_button("Refresh Package List")
-        refresh_btn.connect("clicked", lambda _: self._load_packages())
+        # Filter bar
+        filter_row = QtWidgets.QHBoxLayout()
+        filter_lbl = QtWidgets.QLabel("Filter:")
+        self._filter_field = QtWidgets.QLineEdit()
+        self._filter_field.setPlaceholderText("Filter results…")
+        self._filter_field.textChanged.connect(self._proxy.setFilterFixedString)
+        filter_row.addWidget(filter_lbl)
+        filter_row.addWidget(self._filter_field)
+        self.content_layout.addLayout(filter_row)
 
-        self.append_to_body(install_group)
-        self.append_to_body(self._install_status)
-        self.append_to_body(pkgs_group)
-        self.append_to_body(refresh_btn)
-        self._load_packages()
+        # Install button
+        install_btn = QtWidgets.QPushButton("Install selected")
+        install_btn.clicked.connect(self._on_install_selected)
+        self.content_layout.addWidget(install_btn)
 
-    def _on_install(self, _btn: Gtk.Button) -> None:
-        source = self._url_entry.get_text().strip()
-        if not source:
+    def _on_search(self) -> None:
+        query = self._search_field.text().strip()
+        if not query:
             return
-        self._install_status.set_label("Installing…")
 
-        def _work() -> None:
-            try:
-                if source.startswith("http"):
-                    install_apk_url(source)
-                else:
-                    from waydroid_toolkit.modules.packages import install_apk_file
-                    install_apk_file(Path(source))
-                GLib.idle_add(lambda: self._install_status.set_label("Installed successfully."))
-                GLib.idle_add(self._load_packages)
-            except Exception as exc:
-                msg = str(exc)
-                GLib.idle_add(lambda: self._install_status.set_label(f"Error: {msg}"))
-                GLib.idle_add(lambda: self._show_error(msg))
+        def _search() -> list:
+            from waydroid_toolkit.modules.packages.manager import search_repos
+            return list(search_repos(query))
 
-        threading.Thread(target=_work, daemon=True).start()
+        self.run_async(_search, on_done=self._model.set_packages)
 
-    def _load_packages(self) -> None:
-        def _work() -> None:
-            try:
-                pkgs = get_installed_packages()
-            except Exception:
-                pkgs = []
+    def _on_install(self, index: QtCore.QModelIndex) -> None:
+        src_index = self._proxy.mapToSource(index)
+        pkg = self._model.package_at(src_index.row())
+        self._install_package(pkg)
 
-            def _update() -> None:
-                child = self._pkgs_list.get_first_child()
-                while child:
-                    nxt = child.get_next_sibling()
-                    self._pkgs_list.remove(child)
-                    child = nxt
-                for pkg in sorted(pkgs):
-                    row = Adw.ActionRow(title=pkg)
-                    self._pkgs_list.append(row)
+    def _on_install_selected(self) -> None:
+        indexes = self._table.selectionModel().selectedRows()
+        if not indexes:
+            return
+        src_index = self._proxy.mapToSource(indexes[0])
+        pkg = self._model.package_at(src_index.row())
+        self._install_package(pkg)
 
-            GLib.idle_add(_update)
+    def _install_package(self, pkg: dict) -> None:
+        pkg_name = pkg.get("packageName", "")
+        if not pkg_name:
+            return
 
-        threading.Thread(target=_work, daemon=True).start()
+        def _do() -> None:
+            from waydroid_toolkit.modules.packages.manager import install_package
+            install_package(pkg_name)
+
+        self.run_async(
+            _do,
+            on_done=lambda _: self.show_toast(
+                f"Installed {pkg.get('name', pkg_name)}", error=False
+            ),
+        )
