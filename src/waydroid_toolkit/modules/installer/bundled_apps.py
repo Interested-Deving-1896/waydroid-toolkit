@@ -32,6 +32,7 @@ _CACHE_DIR = Path("/tmp/waydroid-toolkit/bundled")
 
 
 @dataclass
+@dataclass
 class _DirectApp:
     """App with a fixed, stable download URL."""
     name: str
@@ -111,14 +112,14 @@ def install_bundled_apps(
 
     results: list[InstallResult] = []
 
-    for app in _DIRECT_APPS:
-        results.append(_install_direct(app, _p))
+    for direct_app in _DIRECT_APPS:
+        results.append(_install_direct(direct_app, _p))
 
-    for app in _GITLAB_APPS:
-        results.append(_install_gitlab(app, _p))
+    for gitlab_app in _GITLAB_APPS:
+        results.append(_install_gitlab(gitlab_app, _p))
 
-    for app in _GITHUB_APPS:
-        results.append(_install_github(app, _p))
+    for github_app in _GITHUB_APPS:
+        results.append(_install_github(github_app, _p))
 
     return results
 

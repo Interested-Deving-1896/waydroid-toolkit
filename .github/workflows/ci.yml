@@ -72,19 +72,8 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
-      - name: Run mypy (new modules only)
-        # Check only the modules introduced in v0.2. Pre-existing modules
-        # (gui/, dbus/service.py, installer/, packages/) use runtime Qt/dbus
-        # decorators that have no stubs and are excluded from strict checking.
-        run: |
-          mypy \
-            src/waydroid_toolkit/modules/extensions/resolver.py \
-            src/waydroid_toolkit/modules/images/androidtv.py \
-            src/waydroid_toolkit/modules/snapshot/ \
-            src/waydroid_toolkit/modules/extensions/widevine.py \
-            src/waydroid_toolkit/modules/extensions/keymapper.py \
-            src/waydroid_toolkit/cli/commands/snapshot.py \
-            --ignore-missing-imports --no-error-summary
+      - name: Run mypy
+        run: mypy src/waydroid_toolkit --no-error-summary
 
   # ── Wheel build ────────────────────────────────────────────────────────────
   build:

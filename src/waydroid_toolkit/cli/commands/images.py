@@ -151,13 +151,14 @@ def atv_detect(path: str) -> None:
     """Detect whether PATH (or the active profile) is an Android TV image."""
     from pathlib import Path
 
-    target = Path(path) if path else None
-    if target is None:
-        active = get_active_profile()
-        if active is None:
-            console.print("[red]No active profile found.[/red]", err=True)
+    if path:
+        target: Path = Path(path)
+    else:
+        active_path = get_active_profile()
+        if active_path is None:
+            console.print("[red]No active profile found.[/red]")
             raise SystemExit(1)
-        target = active.path
+        target = Path(active_path)
     result = is_atv_profile(target)
     console.print("android-tv" if result else "standard")
 

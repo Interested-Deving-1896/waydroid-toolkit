@@ -150,8 +150,14 @@ class PackagesWidget(WdtPage):
             return
 
         def _do() -> None:
-            from waydroid_toolkit.modules.packages.manager import install_package
-            install_package(pkg_name)
+            from waydroid_toolkit.modules.packages.manager import install_apk_url
+            apk_url = pkg.get("apkUrl", "")
+            if not apk_url:
+                raise RuntimeError(
+                    f"No download URL available for {pkg_name}. "
+                    "Install the APK manually via 'wdt packages install'."
+                )
+            install_apk_url(apk_url)
 
         self.run_async(
             _do,

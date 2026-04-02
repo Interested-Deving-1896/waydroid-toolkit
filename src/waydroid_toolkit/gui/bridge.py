@@ -321,7 +321,7 @@ class PackagesBridge(WdtBridgeBase):
     def refreshRepos(self) -> None:
         def _do() -> list:
             from waydroid_toolkit.modules.packages.manager import list_repos
-            return [{"url": r.url, "name": r.name} for r in list_repos()]
+            return [{"url": r["url"], "name": r["name"]} for r in list_repos()]
 
         def _apply(data: list) -> None:
             self._repos = data
@@ -332,8 +332,11 @@ class PackagesBridge(WdtBridgeBase):
     @Slot(str)
     def addRepo(self, url: str) -> None:
         def _do() -> None:
+            from urllib.parse import urlparse
+
             from waydroid_toolkit.modules.packages.manager import add_repo
-            add_repo(url)
+            name = urlparse(url).hostname or url
+            add_repo(name, url)
         self._run(_do, on_done=lambda _: self.refreshRepos())
 
     @Slot(str)
@@ -361,8 +364,11 @@ class PerformanceBridge(WdtBridgeBase):
     @Slot(str)
     def applyProfile(self, profile: str) -> None:
         def _do() -> str:
-            from waydroid_toolkit.modules.performance.tuner import apply_profile
-            apply_profile(profile)
+            from waydroid_toolkit.modules.performance.tuner import (
+                PerformanceProfile,
+                apply_profile,
+            )
+            apply_profile(PerformanceProfile())
             return profile
         self._run(_do, on_done=lambda p: self._set_profile(p))
 

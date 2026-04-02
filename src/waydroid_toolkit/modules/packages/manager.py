@@ -101,8 +101,8 @@ def remove_repo(name: str) -> None:
         shutil.rmtree(path)
 
 
-def list_repos() -> list[dict]:
-    repos = []
+def list_repos() -> list[dict[str, str]]:
+    repos: list[dict[str, str]] = []
     if not _REPOS_DIR.exists():
         return repos
     for meta_file in _REPOS_DIR.glob("*/meta.json"):

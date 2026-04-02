@@ -60,7 +60,7 @@ class ImageProfile:
 
 def scan_profiles(base: Path = _IMAGES_BASE) -> list[ImageProfile]:
     """Recursively scan base for directories containing system.img + vendor.img."""
-    profiles = []
+    profiles: list[ImageProfile] = []
     if not base.exists():
         return profiles
     for candidate in sorted(base.rglob("system.img")):
