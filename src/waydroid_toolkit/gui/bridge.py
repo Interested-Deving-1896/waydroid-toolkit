@@ -419,8 +419,15 @@ class ImagesBridge(WdtBridgeBase):
     @Slot()
     def refresh(self) -> None:
         def _do() -> list:
-            from waydroid_toolkit.modules.images.manager import list_images
-            return [{"name": i.name, "active": i.active} for i in list_images()]
+            from waydroid_toolkit.modules.images.manager import (
+                get_active_profile,
+                scan_profiles,
+            )
+            active = get_active_profile()
+            return [
+                {"name": p.name, "active": active is not None and p.name == active}
+                for p in scan_profiles()
+            ]
 
         def _apply(data: list) -> None:
             self._images = data
@@ -431,8 +438,15 @@ class ImagesBridge(WdtBridgeBase):
     @Slot(str)
     def activate(self, name: str) -> None:
         def _do() -> None:
-            from waydroid_toolkit.modules.images.manager import activate_image
-            activate_image(name)
+            from waydroid_toolkit.modules.images.manager import (
+                scan_profiles,
+                switch_profile,
+            )
+            profiles = scan_profiles()
+            match = next((p for p in profiles if p.name == name), None)
+            if match is None:
+                raise ValueError(f"Profile '{name}' not found.")
+            switch_profile(match)
         self._run(_do, on_done=lambda _: self.refresh())
 
     @Slot()

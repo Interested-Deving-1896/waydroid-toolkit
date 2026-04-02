@@ -54,7 +54,7 @@ Page {
                             text: "Open"
                             flat: true
                             Material.accent: Material.Teal
-                            onClicked: pageStack.replace(
+                            onClicked: applicationWindow.pageStack.replace(
                                 Qt.resolvedUrl("LogcatPage.qml"))
                         }
                     }

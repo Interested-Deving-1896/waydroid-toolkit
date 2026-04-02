@@ -8,6 +8,11 @@ import "components"
 
 ApplicationWindow {
     id: root
+    // Aliases used by child pages loaded into the StackView.
+    // applicationWindow.showToast(msg, isError) — global toast
+    // applicationWindow.pageStack.replace(url) — navigate to a page
+    property alias applicationWindow: root
+    readonly property alias pageStack: pageStack
 
     title: "WayDroid Toolkit"
     width: 960
