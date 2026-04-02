@@ -32,8 +32,6 @@ from __future__ import annotations
 
 import hashlib
 import platform
-import re
-import shutil
 import subprocess
 import tempfile
 import zipfile

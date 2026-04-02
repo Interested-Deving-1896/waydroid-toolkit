@@ -11,7 +11,6 @@ from waydroid_toolkit.modules.images import (
     download_updates,
     get_active_profile,
     is_atv_profile,
-    profile_is_atv_configured,
     scan_profiles,
     switch_profile,
 )
@@ -164,7 +163,8 @@ def atv_detect(path: str) -> None:
 
 
 @atv_group.command("apply")
-@click.option("--standard", is_flag=True, default=False, help="Apply standard (non-ATV) props instead.")
+@click.option("--standard", is_flag=True, default=False,
+              help="Apply standard (non-ATV) props instead.")
 def atv_apply(standard: bool) -> None:
     """Write ATV (or standard) display/input properties to waydroid.cfg."""
     if standard:

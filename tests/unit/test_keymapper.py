@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,7 +15,6 @@ from waydroid_toolkit.modules.extensions.keymapper import (
     _remove_systemd_unit,
     _write_systemd_unit,
 )
-
 
 # ── Meta ──────────────────────────────────────────────────────────────────────
 

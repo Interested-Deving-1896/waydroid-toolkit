@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import datetime
 import subprocess
-from pathlib import Path
 
 from .backends import SnapshotBackend, SnapshotInfo
 
@@ -45,7 +44,7 @@ class ZfsBackend(SnapshotBackend):
         _run(["sudo", "zfs", "snapshot", snap_id])
         return SnapshotInfo(
             name=name,
-            created=datetime.datetime.now(tz=datetime.timezone.utc),
+            created=datetime.datetime.now(tz=datetime.UTC),
             backend=self.NAME,
             source=self._dataset,
             size_bytes=self._snap_size(snap_id),
@@ -71,9 +70,9 @@ class ZfsBackend(SnapshotBackend):
             try:
                 created = datetime.datetime.strptime(
                     creation_str, "%a %b %d %H:%M %Y"
-                ).replace(tzinfo=datetime.timezone.utc)
+                ).replace(tzinfo=datetime.UTC)
             except ValueError:
-                created = datetime.datetime.now(tz=datetime.timezone.utc)
+                created = datetime.datetime.now(tz=datetime.UTC)
             size = _parse_zfs_size(used_str)
             snaps.append(SnapshotInfo(
                 name=snap_name,

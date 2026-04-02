@@ -8,7 +8,6 @@ dbus-python is absent.
 
 from __future__ import annotations
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,7 +18,6 @@ from waydroid_toolkit.modules.dbus.service import (
     OBJECT_PATH,
     WdtService,
 )
-
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -70,6 +68,7 @@ class TestGetStatus:
 class TestListProfiles:
     def test_returns_list_of_dicts(self) -> None:
         from pathlib import Path
+
         from waydroid_toolkit.modules.images.manager import ImageProfile
         mock_profiles = [
             ImageProfile(name="lineage-20", path=Path("/img/lineage-20")),
@@ -94,6 +93,7 @@ class TestListProfiles:
 class TestSwitchProfile:
     def test_returns_true_on_success(self) -> None:
         from pathlib import Path
+
         from waydroid_toolkit.modules.images.manager import ImageProfile
         mock_profiles = [ImageProfile(name="lineage-20", path=Path("/img/lineage-20"))]
         svc = WdtService()
@@ -165,10 +165,11 @@ class TestInstallExtension:
 class TestCreateSnapshot:
     def test_returns_snapshot_name(self) -> None:
         import datetime
+
         from waydroid_toolkit.modules.snapshot.backends import SnapshotInfo
         mock_info = SnapshotInfo(
             name="waydroid-20240101_120000-test",
-            created=datetime.datetime.now(tz=datetime.timezone.utc),
+            created=datetime.datetime.now(tz=datetime.UTC),
             backend="zfs",
             source="rpool/waydroid",
         )
@@ -183,10 +184,11 @@ class TestCreateSnapshot:
 
     def test_passes_empty_label(self) -> None:
         import datetime
+
         from waydroid_toolkit.modules.snapshot.backends import SnapshotInfo
         mock_info = SnapshotInfo(
             name="waydroid-20240101_120000",
-            created=datetime.datetime.now(tz=datetime.timezone.utc),
+            created=datetime.datetime.now(tz=datetime.UTC),
             backend="btrfs",
             source="/var/lib/waydroid",
         )
@@ -204,8 +206,9 @@ class TestCreateSnapshot:
 class TestListSnapshots:
     def test_returns_list_of_dicts(self) -> None:
         import datetime
+
         from waydroid_toolkit.modules.snapshot.backends import SnapshotInfo
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
         mock_snaps = [
             SnapshotInfo(name="waydroid-20240101_120000", created=now,
                          backend="zfs", source="rpool/waydroid"),

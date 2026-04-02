@@ -25,7 +25,6 @@ from collections.abc import Callable, Mapping
 
 from .base import Extension
 
-
 # ── Exceptions ────────────────────────────────────────────────────────────────
 
 class DependencyError(Exception):
@@ -193,7 +192,6 @@ def _find_cycle(nodes: set[str], registry: Mapping[str, Extension]) -> list[str]
 
     def _dfs(node: str) -> bool:
         if node in stack:
-            idx = stack.index(node)
             stack.append(node)  # close the cycle for display
             return True
         if node in visited:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,7 +13,6 @@ from waydroid_toolkit.modules.snapshot.backends import SnapshotInfo
 from waydroid_toolkit.modules.snapshot.btrfs import BtrfsBackend, _parse_snap_timestamp
 from waydroid_toolkit.modules.snapshot.detector import detect_backend, get_backend
 from waydroid_toolkit.modules.snapshot.zfs import ZfsBackend, _parse_zfs_size
-
 
 # ── ZfsBackend ────────────────────────────────────────────────────────────────
 
@@ -42,7 +41,7 @@ class TestZfsBackend:
     def test_create_runs_zfs_snapshot(self) -> None:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
-            info = self._backend().create("test-label")
+            self._backend().create("test-label")
         # First call is the snapshot, second is the size query
         first_cmd = mock_run.call_args_list[0][0][0]
         assert "snapshot" in first_cmd
@@ -178,7 +177,7 @@ class TestBtrfsBackend:
         b = self._backend(tmp_path)
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
-            info = b.create("my-label")
+            b.create("my-label")
         # Find the snapshot call (not the mkdir)
         snap_calls = [
             c for c in mock_run.call_args_list
@@ -287,9 +286,9 @@ class TestParseSnapTimestamp:
         assert dt.month == 1
 
     def test_invalid_name_returns_now(self) -> None:
-        before = datetime.datetime.now(tz=datetime.timezone.utc)
+        before = datetime.datetime.now(tz=datetime.UTC)
         dt = _parse_snap_timestamp("waydroid-badformat")
-        after = datetime.datetime.now(tz=datetime.timezone.utc)
+        after = datetime.datetime.now(tz=datetime.UTC)
         assert before <= dt <= after
 
 
@@ -328,7 +327,7 @@ class TestDetector:
 
 class TestSnapshotInfo:
     def test_fields(self) -> None:
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
         info = SnapshotInfo(
             name="waydroid-20240101_120000",
             created=now,
@@ -341,7 +340,7 @@ class TestSnapshotInfo:
         assert info.size_bytes == 1024
 
     def test_size_bytes_optional(self) -> None:
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        now = datetime.datetime.now(tz=datetime.UTC)
         info = SnapshotInfo(
             name="snap",
             created=now,

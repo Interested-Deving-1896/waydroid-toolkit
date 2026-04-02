@@ -28,8 +28,6 @@ import configparser
 import subprocess
 from pathlib import Path
 
-from waydroid_toolkit.core.waydroid import WaydroidConfig
-
 _CFG_PATH = Path("/var/lib/waydroid/waydroid.cfg")
 
 # Display settings for ATV profiles

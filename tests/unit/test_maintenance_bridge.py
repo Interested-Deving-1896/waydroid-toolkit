@@ -63,7 +63,6 @@ for _mod in list(sys.modules):
 
 from waydroid_toolkit.gui.bridge import MaintenanceBridge  # noqa: E402
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _make_bridge() -> MaintenanceBridge:
@@ -225,8 +224,6 @@ class TestCaptureScreenshot:
         bridge.screenshotSaved.connect(saved.append)
 
         # _run uses QThreadPool; call the inner function directly
-        captured: list = []
-
         def fake_run(fn, *args, on_done=None, **kwargs):
             result = fn()
             if on_done:

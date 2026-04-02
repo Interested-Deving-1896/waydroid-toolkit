@@ -23,12 +23,9 @@ Waydroid session.
 from __future__ import annotations
 
 import subprocess
-import tempfile
 import urllib.request
 from collections.abc import Callable
 from pathlib import Path
-
-from waydroid_toolkit.core import adb
 
 from .base import Extension, ExtensionMeta
 

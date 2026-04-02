@@ -59,7 +59,7 @@ class BtrfsBackend(SnapshotBackend):
         ])
         return SnapshotInfo(
             name=name,
-            created=datetime.datetime.now(tz=datetime.timezone.utc),
+            created=datetime.datetime.now(tz=datetime.UTC),
             backend=self.NAME,
             source=str(self._subvol),
             size_bytes=None,  # btrfs doesn't report snapshot size cheaply
@@ -141,7 +141,7 @@ def _parse_snap_timestamp(name: str) -> datetime.datetime:
     try:
         ts_part = name[len("waydroid-"):].split("-")[0]  # YYYYMMDD_HHMMSS
         return datetime.datetime.strptime(ts_part, "%Y%m%d_%H%M%S").replace(
-            tzinfo=datetime.timezone.utc
+            tzinfo=datetime.UTC
         )
     except ValueError:
-        return datetime.datetime.now(tz=datetime.timezone.utc)
+        return datetime.datetime.now(tz=datetime.UTC)

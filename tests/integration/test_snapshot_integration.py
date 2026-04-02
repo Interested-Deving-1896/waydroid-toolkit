@@ -14,7 +14,6 @@ import pytest
 from waydroid_toolkit.modules.snapshot import detect_backend, get_backend
 from waydroid_toolkit.modules.snapshot.backends import SnapshotInfo
 
-
 # Skip the entire module if no snapshot backend is available.
 # The autouse _require_live_waydroid fixture already handles the Waydroid
 # prerequisite; this adds the backend check on top.

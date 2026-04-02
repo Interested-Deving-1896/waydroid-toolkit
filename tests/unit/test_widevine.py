@@ -14,7 +14,6 @@ from waydroid_toolkit.modules.extensions.widevine import (
     install_widevine,
 )
 
-
 # ── WidevineExtension meta ────────────────────────────────────────────────────
 
 class TestMeta:

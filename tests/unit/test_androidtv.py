@@ -7,8 +7,6 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from waydroid_toolkit.modules.images.androidtv import (
     _ATV_PROPS,
     _STANDARD_PROPS,
@@ -18,7 +16,6 @@ from waydroid_toolkit.modules.images.androidtv import (
     is_atv_profile,
     profile_is_atv_configured,
 )
-
 
 # ---------------------------------------------------------------------------
 # is_atv_profile

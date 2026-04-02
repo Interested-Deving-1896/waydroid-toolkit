@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +14,6 @@ from waydroid_toolkit.modules.extensions.resolver import (
     install_with_deps,
     resolve,
 )
-
 
 # ── Test fixtures ─────────────────────────────────────────────────────────────
 

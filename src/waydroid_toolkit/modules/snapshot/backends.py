@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pathlib import Path
 
 
 @dataclass
@@ -73,7 +72,7 @@ class SnapshotBackend(ABC):
 
     @staticmethod
     def _timestamp() -> str:
-        return datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
+        return datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
 
     def _snap_name(self, label: str) -> str:
         ts = self._timestamp()
