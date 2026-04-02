@@ -19,6 +19,8 @@ All bridge classes inherit WdtBridgeBase which provides:
 
 from __future__ import annotations
 
+import subprocess
+import threading
 import traceback
 from collections.abc import Callable
 from typing import Any
@@ -451,3 +453,155 @@ class MaintenanceBridge(WdtBridgeBase):
             from waydroid_toolkit.modules.maintenance.tools import get_logcat
             return get_logcat()
         self._run(_do, on_done=lambda out: self.logcatOutput.emit(out))
+
+
+# ── ADB shell bridge ──────────────────────────────────────────────────────────
+
+class AdbShellBridge(QtCore.QObject):
+    """Interactive adb shell terminal bridge for the native fallback UI.
+
+    Maintains a persistent ``adb shell`` subprocess. A background thread
+    reads stdout line-by-line and emits ``lineReceived`` on the Qt thread
+    via a queued signal so QML can append each line to the terminal view.
+
+    Lifecycle
+    ---------
+    QML calls ``connect()`` when the Terminal page becomes visible.
+    The user types a command and QML calls ``sendLine(cmd)``.
+    QML calls ``disconnect()`` when leaving the page (or on window close).
+
+    If the persistent shell process dies unexpectedly ``sessionEnded`` is
+    emitted so QML can show a reconnect prompt.
+    """
+
+    # Emitted for every line of output from the shell (including the prompt)
+    lineReceived = Signal(str)
+    # Emitted when the adb connection state changes
+    connectedChanged = Signal()
+    # Emitted when the shell process exits (code, or -1 on read error)
+    sessionEnded = Signal(int)
+    # Emitted when adb is not on PATH or the device is unreachable
+    errorOccurred = Signal(str)
+
+    _ADB_TARGET = "192.168.250.1:5555"
+
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+        super().__init__(parent)
+        self._proc: subprocess.Popen | None = None
+        self._reader: threading.Thread | None = None
+        self._connected = False
+
+    # ── Public properties ─────────────────────────────────────────────────
+
+    @Property(bool, notify=connectedChanged)
+    def connected(self) -> bool:
+        return self._connected
+
+    # ── Slots ─────────────────────────────────────────────────────────────
+
+    @Slot()
+    def connectShell(self) -> None:
+        """Open a persistent ``adb shell`` session to Waydroid."""
+        if self._proc is not None:
+            return  # already open
+
+        try:
+            subprocess.run(
+                ["adb", "connect", self._ADB_TARGET],
+                capture_output=True, timeout=8, check=False,
+            )
+            self._proc = subprocess.Popen(
+                ["adb", "-s", self._ADB_TARGET, "shell"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+        except FileNotFoundError:
+            self.errorOccurred.emit(
+                "adb not found. Install android-tools-adb and try again."
+            )
+            return
+        except Exception:  # noqa: BLE001
+            self.errorOccurred.emit(traceback.format_exc())
+            return
+
+        self._set_connected(True)
+        self._reader = threading.Thread(target=self._read_loop, daemon=True)
+        self._reader.start()
+
+    @Slot()
+    def disconnectShell(self) -> None:
+        """Terminate the shell session."""
+        proc = self._proc
+        self._proc = None
+        self._set_connected(False)
+        if proc is not None:
+            try:
+                proc.stdin.close()  # type: ignore[union-attr]
+                proc.terminate()
+                proc.wait(timeout=3)
+            except Exception:  # noqa: BLE001
+                proc.kill()
+
+    @Slot(str)
+    def sendLine(self, line: str) -> None:
+        """Write *line* to the shell's stdin (newline appended automatically)."""
+        if self._proc is None or self._proc.stdin is None:
+            self.errorOccurred.emit("Shell is not connected.")
+            return
+        try:
+            self._proc.stdin.write(line + "\n")
+            self._proc.stdin.flush()
+        except BrokenPipeError:
+            self._handle_proc_exit(-1)
+
+    @Slot(str, result=str)
+    def runCommand(self, command: str) -> str:
+        """Run a single ``adb shell <command>`` and return combined output.
+
+        This is the one-shot fallback used when no persistent session is
+        open (e.g. the user hasn't pressed Connect yet).
+        """
+        try:
+            result = subprocess.run(
+                ["adb", "-s", self._ADB_TARGET, "shell", command],
+                capture_output=True, text=True, timeout=30,
+            )
+            return (result.stdout + result.stderr).rstrip()
+        except FileNotFoundError:
+            return "Error: adb not found. Install android-tools-adb."
+        except subprocess.TimeoutExpired:
+            return "Error: command timed out after 30 s."
+        except Exception:  # noqa: BLE001
+            return traceback.format_exc()
+
+    # ── Internal ──────────────────────────────────────────────────────────
+
+    def _set_connected(self, value: bool) -> None:
+        if self._connected != value:
+            self._connected = value
+            self.connectedChanged.emit()
+
+    def _read_loop(self) -> None:
+        """Background thread: read lines from the shell and emit signals."""
+        proc = self._proc
+        if proc is None or proc.stdout is None:
+            return
+        try:
+            for line in proc.stdout:
+                if self._proc is None:
+                    break  # disconnectShell() was called
+                self.lineReceived.emit(line.rstrip("\n"))
+            code = proc.wait()
+        except Exception:  # noqa: BLE001
+            code = -1
+        # Only fire sessionEnded if we didn't initiate the disconnect
+        if self._proc is not None:
+            self._handle_proc_exit(code)
+
+    def _handle_proc_exit(self, code: int) -> None:
+        self._proc = None
+        self._set_connected(False)
+        self.sessionEnded.emit(code)

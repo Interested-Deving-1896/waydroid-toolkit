@@ -67,6 +67,7 @@ def _setup_webengine() -> None:
 def _register_bridges(engine: QtQml.QQmlApplicationEngine) -> None:  # type: ignore[name-defined]
     """Instantiate all bridge objects and expose them as QML context properties."""
     from waydroid_toolkit.gui.bridge import (
+        AdbShellBridge,
         BackendBridge,
         BackupBridge,
         ExtensionsBridge,
@@ -88,6 +89,7 @@ def _register_bridges(engine: QtQml.QQmlApplicationEngine) -> None:  # type: ign
         "backupBridge":      BackupBridge(),
         "imagesBridge":      ImagesBridge(),
         "maintenanceBridge": MaintenanceBridge(),
+        "adbShellBridge":    AdbShellBridge(),
     }
 
     for name, bridge in bridges.items():
