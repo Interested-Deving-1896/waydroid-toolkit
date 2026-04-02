@@ -99,8 +99,8 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Install build
-        run: pip install build
+      - name: Install build tools
+        run: pip install build setuptools wheel
 
       - name: Build wheel
         run: python -m build --wheel --no-isolation
