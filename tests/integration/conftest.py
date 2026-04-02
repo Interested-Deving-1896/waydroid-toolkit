@@ -10,11 +10,20 @@ Skip conditions
 - ``adb`` binary not found on PATH
 - Waydroid session is not in RUNNING state
 - ADB cannot connect to 192.168.250.1:5555 within the retry window
+
+Markers
+-------
+All integration tests are tagged ``@pytest.mark.integration`` so they can
+be selected or excluded explicitly:
+
+    pytest -m integration          # run only integration tests
+    pytest -m "not integration"    # skip integration tests
 """
 
 from __future__ import annotations
 
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -46,6 +55,15 @@ _SKIP_REASON = (
 _INTEGRATION_AVAILABLE: bool = _waydroid_running() and _adb_reachable()
 
 
+def pytest_collection_modifyitems(items):
+    """Auto-apply the 'integration' marker to every test in this directory."""
+    integration_dir = Path(__file__).parent
+    marker = pytest.mark.integration
+    for item in items:
+        if Path(item.fspath).is_relative_to(integration_dir):
+            item.add_marker(marker)
+
+
 @pytest.fixture(autouse=True)
 def _require_live_waydroid() -> None:
     """Skip every integration test when prerequisites are not met."""
@@ -59,3 +77,18 @@ def adb_connected() -> None:
     if not _INTEGRATION_AVAILABLE:
         pytest.skip(_SKIP_REASON)
     assert connect(retries=3, delay=1.5), "ADB connection failed"
+
+
+@pytest.fixture(scope="session")
+def fixtures_dir() -> Path:
+    """Return the path to the integration test fixtures directory."""
+    return Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(scope="session")
+def minimal_apk(fixtures_dir: Path) -> Path:
+    """Return the minimal APK path, skipping if not present."""
+    apk = fixtures_dir / "minimal.apk"
+    if not apk.exists():
+        pytest.skip("fixtures/minimal.apk not present")
+    return apk

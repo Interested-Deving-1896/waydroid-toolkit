@@ -1,0 +1,25 @@
+Source: waydroid-toolkit
+Section: utils
+Priority: optional
+Maintainer: waydroid-toolkit contributors <https://github.com/waydroid-toolkit/waydroid-toolkit>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, python3-pip
+Standards-Version: 4.6.2
+Homepage: https://github.com/waydroid-toolkit/waydroid-toolkit
+Rules-Requires-Root: no
+
+Package: waydroid-toolkit
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends},
+ python3 (>= 3.11),
+ python3-click (>= 8.1) | python3-pip,
+ python3-rich (>= 13.0) | python3-pip,
+ python3-requests (>= 2.31) | python3-pip,
+ python3-toml (>= 0.10) | python3-pip,
+ waydroid
+Recommends: python3-pyside6 | python3-pyqt6, adb, debugfs
+Description: Unified management suite for Waydroid
+ waydroid-toolkit (wdt) provides a CLI and optional Qt GUI for managing
+ Waydroid Android container instances. Features include image profile
+ switching, OTA updates, extension management (GApps, Widevine, key
+ mapper), file transfer, screen recording, logcat streaming, and
+ Android TV profile support.

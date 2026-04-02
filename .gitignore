@@ -33,3 +33,6 @@ MANIFEST
 
 # Downloaded APK cache
 /tmp/waydroid-toolkit/
+-e 
+# MkDocs
+site/

@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_install:
+	dh_auto_install
+	# Install data files (QML, icons, etc.)
+	install -d $(CURDIR)/debian/waydroid-toolkit/usr/share/waydroid-toolkit
+	cp -r $(CURDIR)/src/waydroid_toolkit/gui/qml \
+	      $(CURDIR)/debian/waydroid-toolkit/usr/share/waydroid-toolkit/

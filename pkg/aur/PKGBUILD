@@ -1,0 +1,42 @@
+# Maintainer: waydroid-toolkit contributors
+pkgname=waydroid-toolkit
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Unified management suite for Waydroid"
+arch=('any')
+url="https://github.com/waydroid-toolkit/waydroid-toolkit"
+license=('GPL3')
+depends=(
+    'python>=3.11'
+    'python-click>=8.1'
+    'python-rich>=13.0'
+    'python-requests>=2.31'
+    'python-toml>=0.10'
+    'waydroid'
+)
+optdepends=(
+    'python-pyside6: Qt GUI support'
+    'python-pyqt6: Qt GUI support (alternative binding)'
+    'android-tools: ADB-based features (screen record, file transfer, logcat)'
+    'e2fsprogs: Android TV image detection via debugfs'
+)
+makedepends=('python-setuptools' 'python-build' 'python-installer' 'python-wheel')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/waydroid-toolkit/waydroid-toolkit/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    python -m installer --destdir="$pkgdir" dist/*.whl
+
+    # Install QML data files alongside the package
+    install -d "$pkgdir/usr/share/$pkgname"
+    cp -r src/waydroid_toolkit/gui/qml "$pkgdir/usr/share/$pkgname/"
+
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

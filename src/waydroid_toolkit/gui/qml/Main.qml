@@ -35,6 +35,7 @@ ApplicationWindow {
         { id: "performance", label: "Performance", icon: "qrc:/icons/performance.svg", page: "pages/PerformancePage.qml" },
         { id: "backup",      label: "Backup",      icon: "qrc:/icons/backup.svg",      page: "pages/BackupPage.qml"      },
         { id: "maintenance", label: "Maintenance", icon: "qrc:/icons/maintenance.svg", page: "pages/MaintenancePage.qml" },
+        { id: "files",       label: "Files",       icon: "qrc:/icons/files.svg",       page: "pages/FileManagerPage.qml" },
         { id: "logcat",      label: "Logcat",      icon: "qrc:/icons/logcat.svg",      page: "pages/LogcatPage.qml"      },
         { id: "terminal",    label: "Terminal",    icon: "qrc:/icons/terminal.svg",    page: "pages/TerminalPage.qml"    },
     ]
@@ -54,6 +55,7 @@ ApplicationWindow {
     Connections { target: performanceBridge; function onErrorOccurred(m) { showToast(m, true) } }
     Connections { target: backupBridge;      function onErrorOccurred(m) { showToast(m, true) } }
     Connections { target: imagesBridge;      function onErrorOccurred(m) { showToast(m, true) } }
+    Connections { target: fileBridge;        function onErrorOccurred(m) { showToast(m, true) } }
     Connections { target: maintenanceBridge; function onErrorOccurred(m) { showToast(m, true) } }
 
     // ── Layout ────────────────────────────────────────────────────────────

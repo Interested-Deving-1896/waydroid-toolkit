@@ -133,5 +133,21 @@ def switch_profile(
     _set_images_path(profile.path)
     _link_profile_data(profile.name)
 
+    # Auto-apply ATV display/input props when the profile is an Android TV image
+    try:
+        from waydroid_toolkit.modules.images.androidtv import (
+            apply_atv_props,
+            apply_standard_props,
+            is_atv_profile,
+        )
+        if is_atv_profile(profile.path):
+            if progress:
+                progress("Android TV image detected — applying ATV display properties.")
+            apply_atv_props()
+        else:
+            apply_standard_props()
+    except Exception:  # noqa: BLE001
+        pass  # ATV detection is best-effort; never block a profile switch
+
     if progress:
         progress(f"Active profile is now '{profile.name}'. Start Waydroid to apply.")

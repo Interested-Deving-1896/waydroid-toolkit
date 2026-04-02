@@ -26,12 +26,14 @@ from .commands import (
     backend,
     backup,
     build,
+    dbus,
     extensions,
     images,
     install,
     maintenance,
     packages,
     performance,
+    snapshot,
     status,
 )
 
@@ -74,3 +76,5 @@ cli.add_command(packages.cmd, name="packages")
 cli.add_command(backup.cmd, name="backup")
 cli.add_command(performance.cmd, name="performance")
 cli.add_command(maintenance.cmd, name="maintenance")
+cli.add_command(snapshot.cmd, name="snapshot")
+cli.add_command(dbus.cmd, name="dbus")

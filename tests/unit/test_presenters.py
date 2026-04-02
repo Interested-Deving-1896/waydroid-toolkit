@@ -198,7 +198,7 @@ class TestGetExtensionRows:
     def test_returns_all_real_extensions(self) -> None:
         rows = get_extension_rows()
         ids = {r.ext_id for r in rows}
-        assert {"gapps", "microg", "magisk", "libhoudini", "libndk"} == ids
+        assert {"gapps", "microg", "magisk", "libhoudini", "libndk", "widevine", "keymapper"} == ids
 
 
 # ── get_image_profile_rows ────────────────────────────────────────────────────

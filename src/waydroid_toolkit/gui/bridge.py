@@ -493,17 +493,75 @@ class ImagesBridge(WdtBridgeBase):
 # ── Maintenance bridge ────────────────────────────────────────────────────────
 
 class MaintenanceBridge(WdtBridgeBase):
-    """Exposes maintenance tools (logcat, screenshot, debloat) to QML."""
+    """Exposes maintenance tools (logcat, screenshot, screen record, debloat) to QML."""
 
-    logcatOutput    = Signal(str)
-    screenshotSaved = Signal(str)
+    logcatOutput     = Signal(str)
+    screenshotSaved  = Signal(str)
+    recordingSaved   = Signal(str)   # emitted with the saved file path when recording stops
+    recordingChanged = Signal()      # emitted when _recording state toggles
+
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+        super().__init__(parent)
+        self._recording = False
+        self._record_thread: threading.Thread | None = None
+        self._record_stop = threading.Event()
+
+    @Property(bool, notify=recordingChanged)
+    def recording(self) -> bool:
+        return self._recording
+
+    def _set_recording(self, value: bool) -> None:
+        if self._recording != value:
+            self._recording = value
+            self.recordingChanged.emit()
 
     @Slot()
     def captureScreenshot(self) -> None:
         def _do() -> str:
             from waydroid_toolkit.modules.maintenance.tools import take_screenshot
-            return take_screenshot()
+            return str(take_screenshot())
         self._run(_do, on_done=lambda p: self.screenshotSaved.emit(p))
+
+    @Slot(int)
+    def startRecording(self, duration_seconds: int = 60) -> None:
+        """Begin a screen recording of up to *duration_seconds* seconds.
+
+        The recording runs in a background thread. Call ``stopRecording()``
+        to end it early. ``recordingSaved(path)`` is emitted when done.
+        """
+        if self._recording:
+            return
+        self._record_stop.clear()
+        self._set_recording(True)
+
+        def _worker() -> None:
+            try:
+                from waydroid_toolkit.modules.maintenance.tools import record_screen
+                path = record_screen(duration_seconds=duration_seconds)
+                self.recordingSaved.emit(str(path))
+            except Exception:  # noqa: BLE001
+                self.errorOccurred.emit(traceback.format_exc())
+            finally:
+                self._set_recording(False)
+
+        self._record_thread = threading.Thread(target=_worker, daemon=True)
+        self._record_thread.start()
+
+    @Slot()
+    def stopRecording(self) -> None:
+        """Signal the recording thread to stop early.
+
+        The underlying ``adb screenrecord`` process will be killed via ADB
+        so the partial recording is still saved.
+        """
+        if not self._recording:
+            return
+        self._record_stop.set()
+        try:
+            from waydroid_toolkit.core import adb
+            adb.shell("pkill -f screenrecord")
+        except Exception:  # noqa: BLE001
+            pass
 
     @Slot()
     def startLogcat(self) -> None:
@@ -511,6 +569,43 @@ class MaintenanceBridge(WdtBridgeBase):
             from waydroid_toolkit.modules.maintenance.tools import get_logcat
             return get_logcat()
         self._run(_do, on_done=lambda out: self.logcatOutput.emit(out))
+
+
+# ── File manager bridge ───────────────────────────────────────────────────────
+
+class FileBridge(WdtBridgeBase):
+    """Exposes push/pull file transfer to QML."""
+
+    transferDone = Signal(bool, str)   # (success, message)
+    progressMsg  = Signal(str)
+
+    @Slot(str, str)
+    def pushFile(self, localPath: str, androidDest: str) -> None:
+        """Push *localPath* on the host to *androidDest* inside Waydroid."""
+        def _do() -> None:
+            from pathlib import Path
+
+            from waydroid_toolkit.modules.maintenance.tools import push_file
+            push_file(Path(localPath), androidDest)
+
+        def _finish(_: None) -> None:
+            self.transferDone.emit(True, f"Pushed {localPath} → {androidDest}")
+
+        self._run(_do, on_done=_finish)
+
+    @Slot(str, str)
+    def pullFile(self, androidSrc: str, localDest: str) -> None:
+        """Pull *androidSrc* from Waydroid to *localDest* on the host."""
+        def _do() -> None:
+            from pathlib import Path
+
+            from waydroid_toolkit.modules.maintenance.tools import pull_file
+            pull_file(androidSrc, Path(localDest))
+
+        def _finish(_: None) -> None:
+            self.transferDone.emit(True, f"Pulled {androidSrc} → {localDest}")
+
+        self._run(_do, on_done=_finish)
 
 
 # ── Logcat bridge ─────────────────────────────────────────────────────────────

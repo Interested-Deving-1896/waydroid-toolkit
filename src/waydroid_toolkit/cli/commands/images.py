@@ -5,9 +5,13 @@ from rich.console import Console
 from rich.table import Table
 
 from waydroid_toolkit.modules.images import (
+    apply_atv_props,
+    apply_standard_props,
     check_updates,
     download_updates,
     get_active_profile,
+    is_atv_profile,
+    profile_is_atv_configured,
     scan_profiles,
     switch_profile,
 )
@@ -135,3 +139,37 @@ def download_image_cmd(dest: str | None, no_update_cfg: bool) -> None:
         console.print(f"[green]Vendor image: {vendor_path}[/green]")
     if not system_path and not vendor_path:
         console.print("[dim]No updates downloaded — images are already up to date.[/dim]")
+
+
+@cmd.group("atv")
+def atv_group() -> None:
+    """Android TV image helpers."""
+
+
+@atv_group.command("detect")
+@click.argument("path", default="", required=False)
+def atv_detect(path: str) -> None:
+    """Detect whether PATH (or the active profile) is an Android TV image."""
+    from pathlib import Path
+
+    target = Path(path) if path else None
+    if target is None:
+        active = get_active_profile()
+        if active is None:
+            console.print("[red]No active profile found.[/red]", err=True)
+            raise SystemExit(1)
+        target = active.path
+    result = is_atv_profile(target)
+    console.print("android-tv" if result else "standard")
+
+
+@atv_group.command("apply")
+@click.option("--standard", is_flag=True, default=False, help="Apply standard (non-ATV) props instead.")
+def atv_apply(standard: bool) -> None:
+    """Write ATV (or standard) display/input properties to waydroid.cfg."""
+    if standard:
+        apply_standard_props()
+        console.print("[green]Standard display properties applied.[/green]")
+    else:
+        apply_atv_props()
+        console.print("[green]Android TV display properties applied.[/green]")

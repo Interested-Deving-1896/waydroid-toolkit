@@ -12,7 +12,7 @@ from waydroid_toolkit.modules.extensions.base import ExtensionState
 
 
 def test_registry_contains_expected_extensions() -> None:
-    expected = {"gapps", "microg", "magisk", "libhoudini", "libndk"}
+    expected = {"gapps", "microg", "magisk", "libhoudini", "libndk", "widevine", "keymapper"}
     assert expected == set(REGISTRY.keys())
 
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "waydroid-toolkit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Unified management suite for Waydroid"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -39,6 +39,10 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.10",
 ]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+]
 
 [project.scripts]
 wdt = "waydroid_toolkit.cli.main:cli"
@@ -48,6 +52,9 @@ waydroid-toolkit = "waydroid_toolkit.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+waydroid_toolkit = ["py.typed", "gui/qml/**/*.qml", "gui/qml/**/*.js"]
 
 [tool.ruff]
 line-length = 100
@@ -70,3 +77,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=waydroid_toolkit --cov-report=term-missing"
+markers = [
+    "integration: marks tests that require a live Waydroid session (deselect with -m 'not integration')",
+    "slow: marks tests that take more than a few seconds",
+]

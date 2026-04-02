@@ -71,6 +71,7 @@ def _register_bridges(engine: QtQml.QQmlApplicationEngine) -> None:  # type: ign
         BackendBridge,
         BackupBridge,
         ExtensionsBridge,
+        FileBridge,
         ImagesBridge,
         LogcatBridge,
         MaintenanceBridge,
@@ -90,6 +91,7 @@ def _register_bridges(engine: QtQml.QQmlApplicationEngine) -> None:  # type: ign
         "backupBridge":      BackupBridge(),
         "imagesBridge":      ImagesBridge(),
         "maintenanceBridge": MaintenanceBridge(),
+        "fileBridge":        FileBridge(),
         "logcatBridge":      LogcatBridge(),
         "adbShellBridge":    AdbShellBridge(),
     }

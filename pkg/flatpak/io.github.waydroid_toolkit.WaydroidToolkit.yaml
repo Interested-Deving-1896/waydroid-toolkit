@@ -1,0 +1,67 @@
+app-id: io.github.waydroid_toolkit.WaydroidToolkit
+runtime: org.kde.Platform
+runtime-version: '6.6'
+sdk: org.kde.Sdk
+command: waydroid-toolkit
+
+finish-args:
+  # Wayland and X11 display access
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  # Network access for OTA updates and extension downloads
+  - --share=network
+  # Host filesystem access for image profiles and file transfer
+  - --filesystem=home
+  - --filesystem=/var/lib/waydroid:rw
+  # D-Bus access for Waydroid session management
+  - --system-talk-name=id.waydro.Container
+  - --talk-name=id.waydro.Session
+
+modules:
+  # Python runtime dependencies
+  - name: python3-click
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps click
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/source/c/click/click-8.1.7.tar.gz
+        sha256: ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
+
+  - name: python3-rich
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps rich
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/source/r/rich/rich-13.7.1.tar.gz
+        sha256: 9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432
+
+  - name: python3-requests
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps requests
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/source/r/requests/requests-2.31.0.tar.gz
+        sha256: 942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+
+  - name: python3-toml
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps toml tomli-w
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/source/t/toml/toml-0.10.2.tar.gz
+        sha256: b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
+
+  - name: waydroid-toolkit
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-deps .
+      - install -d /app/share/waydroid-toolkit
+      - cp -r src/waydroid_toolkit/gui/qml /app/share/waydroid-toolkit/
+    sources:
+      - type: dir
+        path: ../..

@@ -12,15 +12,19 @@ from __future__ import annotations
 from .arm_translation import LibhoudiniExtension, LibndkExtension
 from .base import Extension
 from .gapps import GAppsExtension
+from .keymapper import KeyMapperExtension
 from .magisk import MagiskExtension
 from .microg import MicroGExtension
+from .widevine import WidevineExtension
 
 REGISTRY: dict[str, Extension] = {
-    "gapps": GAppsExtension(),
-    "microg": MicroGExtension(),
-    "magisk": MagiskExtension(),
+    "gapps":      GAppsExtension(),
+    "microg":     MicroGExtension(),
+    "magisk":     MagiskExtension(),
     "libhoudini": LibhoudiniExtension(),
-    "libndk": LibndkExtension(),
+    "libndk":     LibndkExtension(),
+    "widevine":   WidevineExtension(),
+    "keymapper":  KeyMapperExtension(),
 }
 
 

@@ -1,0 +1,73 @@
+site_name: waydroid-toolkit
+site_description: Unified management suite for Waydroid
+site_url: https://waydroid-toolkit.github.io/waydroid-toolkit/
+repo_url: https://github.com/waydroid-toolkit/waydroid-toolkit
+repo_name: waydroid-toolkit/waydroid-toolkit
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - CLI Reference:
+    - Overview: cli/overview.md
+    - extensions: cli/extensions.md
+    - images: cli/images.md
+    - snapshot: cli/snapshot.md
+    - dbus: cli/dbus.md
+    - maintenance: cli/maintenance.md
+    - backup: cli/backup.md
+    - packages: cli/packages.md
+    - performance: cli/performance.md
+  - Modules:
+    - Extensions: modules/extensions.md
+    - Images & ATV: modules/images.md
+    - Snapshots: modules/snapshot.md
+    - D-Bus Service: modules/dbus.md
+    - Maintenance: modules/maintenance.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Architecture: development/architecture.md
+    - Testing: development/testing.md
+    - Packaging: development/packaging.md
+    - Roadmap: development/roadmap.md
+    - Full Roadmap: ROADMAP.md
+    - Specification: SPEC.md
