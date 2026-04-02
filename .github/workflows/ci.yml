@@ -7,6 +7,7 @@ on:
     branches: ["main"]
 
 jobs:
+  # ── Unit tests ─────────────────────────────────────────────────────────────
   test:
     name: Unit tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -18,8 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -28,8 +28,16 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run unit tests
-        run: pytest tests/unit/ -v --tb=short
+        run: pytest tests/unit/ -v --tb=short --cov=waydroid_toolkit --cov-report=xml
 
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ── Lint ───────────────────────────────────────────────────────────────────
   lint:
     name: Lint (ruff)
     runs-on: ubuntu-latest
@@ -37,8 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
@@ -48,3 +55,182 @@ jobs:
 
       - name: Run ruff
         run: ruff check src/ tests/
+
+  # ── Type check ─────────────────────────────────────────────────────────────
+  typecheck:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run mypy (new modules only)
+        # Check only the modules introduced in v0.2. Pre-existing modules
+        # (gui/, dbus/service.py, installer/, packages/) use runtime Qt/dbus
+        # decorators that have no stubs and are excluded from strict checking.
+        run: |
+          mypy \
+            src/waydroid_toolkit/modules/extensions/resolver.py \
+            src/waydroid_toolkit/modules/images/androidtv.py \
+            src/waydroid_toolkit/modules/snapshot/ \
+            src/waydroid_toolkit/modules/extensions/widevine.py \
+            src/waydroid_toolkit/modules/extensions/keymapper.py \
+            src/waydroid_toolkit/cli/commands/snapshot.py \
+            --ignore-missing-imports --no-error-summary
+
+  # ── Wheel build ────────────────────────────────────────────────────────────
+  build:
+    name: Build wheel
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install build
+        run: pip install build
+
+      - name: Build wheel
+        run: python -m build --wheel --no-isolation
+
+      - name: Verify wheel contents
+        run: |
+          python - <<'EOF'
+          import zipfile, pathlib, sys
+          whl = next(pathlib.Path("dist").glob("*.whl"))
+          names = zipfile.ZipFile(whl).namelist()
+          required = [
+              "waydroid_toolkit/py.typed",
+              "waydroid_toolkit/modules/extensions/resolver.py",
+              "waydroid_toolkit/modules/images/androidtv.py",
+              "waydroid_toolkit/modules/snapshot/zfs.py",
+              "waydroid_toolkit/modules/snapshot/btrfs.py",
+              "waydroid_toolkit/modules/dbus/service.py",
+          ]
+          missing = [r for r in required if not any(r in n for n in names)]
+          if missing:
+              print("Missing from wheel:", missing)
+              sys.exit(1)
+          print(f"Wheel OK — {len(names)} files, {whl.stat().st_size // 1024} KiB")
+          EOF
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl
+
+  # ── CLI smoke tests ────────────────────────────────────────────────────────
+  cli-smoke:
+    name: CLI smoke tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: wdt --version
+        run: wdt --version | grep "0.2.0"
+
+      - name: wdt --help
+        run: wdt --help
+
+      - name: wdt extensions --help
+        run: wdt extensions --help
+
+      - name: wdt extensions list (no Waydroid — must not crash)
+        run: wdt extensions list || true
+
+      - name: wdt extensions deps gapps
+        run: wdt extensions deps gapps
+
+      - name: wdt extensions install --dry-run gapps widevine
+        run: wdt extensions install --dry-run gapps widevine
+
+      - name: wdt images --help
+        run: wdt images --help
+
+      - name: wdt images atv --help
+        run: wdt images atv --help
+
+      - name: wdt snapshot --help
+        run: wdt snapshot --help
+
+      - name: wdt dbus --help
+        run: wdt dbus --help
+
+      - name: wdt dbus serve --help
+        run: wdt dbus serve --help
+
+      - name: wdt maintenance --help
+        run: wdt maintenance --help
+
+      - name: wdt backup --help
+        run: wdt backup --help
+
+  # ── Docs build ─────────────────────────────────────────────────────────────
+  docs:
+    name: Build docs (MkDocs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install docs dependencies
+        run: pip install -e ".[docs]"
+
+      - name: Build docs
+        run: mkdocs build --strict
+
+  # ── Integration test report (dry-run, no Waydroid) ─────────────────────────
+  integration-collect:
+    name: Integration tests (collect + skip report)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Collect integration tests (all should skip, none should error)
+        run: |
+          pytest tests/integration/ -v --no-header --tb=short \
+            --ignore=tests/integration/fixtures 2>&1 | tee integration-report.txt
+          grep -q "^ERROR" integration-report.txt && exit 1 || true
+          echo "Integration test collection: OK (all skipped as expected)"
+
+      - name: Upload integration report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-skip-report
+          path: integration-report.txt

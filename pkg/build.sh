@@ -62,7 +62,7 @@ build_aur() {
     # Update sha256sum for the tarball if it exists locally
     if [[ -f "$DIST/$TARBALL" ]]; then
         SHA=$(sha256sum "$DIST/$TARBALL" | awk '{print $1}')
-        sed -i "s/sha256sums=('SKIP')/sha256sums=('$SHA')/" "$AUR_DIR/PKGBUILD"
+        sed -i "s/sha256sums=('[0-9a-f]*')/sha256sums=('$SHA')/" "$AUR_DIR/PKGBUILD"
     fi
     echo "  AUR PKGBUILD ready in $AUR_DIR"
     echo "  Run: cd $AUR_DIR && makepkg -si"

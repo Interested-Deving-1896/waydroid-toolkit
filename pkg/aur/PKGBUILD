@@ -22,7 +22,10 @@ optdepends=(
 )
 makedepends=('python-setuptools' 'python-build' 'python-installer' 'python-wheel')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/waydroid-toolkit/waydroid-toolkit/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+# Update this sum when cutting a new release:
+#   curl -sL https://github.com/waydroid-toolkit/waydroid-toolkit/archive/refs/tags/v$pkgver.tar.gz \
+#     | sha256sum
+sha256sums=('83251a1e864aa1601f3e07473fc0eb81f86faea49cfef6a5ede4231a9be1b8da')
 
 build() {
     cd "$pkgname-$pkgver"

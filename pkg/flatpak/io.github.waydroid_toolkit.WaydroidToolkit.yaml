@@ -19,42 +19,42 @@ finish-args:
   - --talk-name=id.waydro.Session
 
 modules:
-  # Python runtime dependencies
+  # Python runtime dependencies (wheels — no network access at build time)
   - name: python3-click
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app --no-deps click
+      - pip3 install --prefix=/app --no-deps --no-index click-8.1.7-py3-none-any.whl
     sources:
       - type: file
-        url: https://files.pythonhosted.org/packages/source/c/click/click-8.1.7.tar.gz
-        sha256: ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
+        url: https://files.pythonhosted.org/packages/py3/c/click/click-8.1.7-py3-none-any.whl
+        sha256: ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28
 
   - name: python3-rich
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app --no-deps rich
+      - pip3 install --prefix=/app --no-deps --no-index rich-13.7.1-py3-none-any.whl
     sources:
       - type: file
-        url: https://files.pythonhosted.org/packages/source/r/rich/rich-13.7.1.tar.gz
-        sha256: 9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432
+        url: https://files.pythonhosted.org/packages/py3/r/rich/rich-13.7.1-py3-none-any.whl
+        sha256: 4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222
 
   - name: python3-requests
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app --no-deps requests
+      - pip3 install --prefix=/app --no-deps --no-index requests-2.31.0-py3-none-any.whl
     sources:
       - type: file
-        url: https://files.pythonhosted.org/packages/source/r/requests/requests-2.31.0.tar.gz
-        sha256: 942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+        url: https://files.pythonhosted.org/packages/py3/r/requests/requests-2.31.0-py3-none-any.whl
+        sha256: 58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f
 
   - name: python3-toml
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app --no-deps toml tomli-w
+      - pip3 install --prefix=/app --no-deps --no-index toml-0.10.2-py2.py3-none-any.whl
     sources:
       - type: file
-        url: https://files.pythonhosted.org/packages/source/t/toml/toml-0.10.2.tar.gz
-        sha256: b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
+        url: https://files.pythonhosted.org/packages/py2.py3/t/toml/toml-0.10.2-py2.py3-none-any.whl
+        sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
 
   - name: waydroid-toolkit
     buildsystem: simple

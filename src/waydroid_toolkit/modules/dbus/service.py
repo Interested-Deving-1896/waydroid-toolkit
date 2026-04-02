@@ -178,7 +178,7 @@ def _build_dbus_object(service: WdtService, bus: Any) -> Any:
     import dbus
     import dbus.service
 
-    class _WdtDbusObject(dbus.service.Object):
+    class _WdtDbusObject(dbus.service.Object):  # type: ignore[misc]
         def __init__(self) -> None:
             bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
             super().__init__(bus_name, OBJECT_PATH)

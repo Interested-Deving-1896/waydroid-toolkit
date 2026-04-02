@@ -13,38 +13,40 @@
 - [x] Full CLI (`wdt`) with all subcommands
 - [x] Unit test suite (519 tests)
 
-## v0.2 — Polish and completeness
+## v0.2 — Feature complete ✅
 
-- [x] Complete GApps extraction logic (OpenGApps pico + MindTheGapps)
-- [x] OTA image update checker against waydro.id manifest format
-- [x] `wdt images download` — fetch standard images from OTA server
-- [x] GUI: Qt/QML Material interface replacing GTK4 skeleton
-- [x] GUI: logcat viewer page with live streaming and filter UI
-- [x] GUI: native adb shell terminal (fallback when WebEngine unavailable)
-- [x] GUI: OTA check/download wired into Images page
-- [x] Distro detection coverage: NixOS, Gentoo, Void, Alpine
-- [x] `wdt maintenance record` — screen recording via `adb shell screenrecord`
-- [ ] Widevine L3 extension
-- [ ] Key mapper extension (gamepad/keyboard-to-touch input)
-- [ ] GUI: file manager page (push/pull with file picker)
-- [ ] GUI: screen recording slot in Maintenance page
-- [ ] Packaging: `.deb`, `.rpm`, AUR PKGBUILD, Flatpak manifest
+- [x] Widevine L3 extension (vendor overlay, Android 11 + 13 variants)
+- [x] Key mapper extension (APK install + systemd user unit)
+- [x] GUI: file manager page (push/pull via `FileBridge`)
+- [x] Android TV image profile support (`debugfs` detection, auto-apply
+      display/input props on `switch_profile()`, `wdt images atv` commands)
+- [x] `MaintenanceBridge` screen recording (`startRecording` / `stopRecording`
+      slots, `recording` property, `recordingSaved` signal, GUI row)
+- [x] Packaging: `.deb`, `.rpm`, AUR `PKGBUILD`, Flatpak manifest, `pkg/build.sh`
+- [x] Extension dependency resolution (BFS expand, conflict detection,
+      Kahn topological sort; `wdt extensions install` multi-ID + `--dry-run`;
+      `wdt extensions deps`)
+- [x] Snapshot support — `ZfsBackend`, `BtrfsBackend`, `SnapshotBackend` ABC,
+      `detect_backend()` / `get_backend()`; `wdt snapshot` CLI group
+- [x] D-Bus service mode (`io.github.waydroid_toolkit`; 8 methods, 3 signals;
+      activation file + policy XML; `wdt dbus` CLI group)
+- [x] Integration test suite (5 new files; `integration` marker; auto-skip
+      when Waydroid / ADB / backend absent)
+- [x] MkDocs documentation site (Material theme; 20 pages covering Getting
+      Started, CLI reference, module reference, development guides)
+- [x] Stable public API + PyPI release prep (`py.typed`, `__all__` audit,
+      `CHANGELOG.md`, version 0.2.0, wheel 134 KiB)
 
-## v0.3 — Advanced features
+## v0.3 — Stable release (planned)
 
-- [ ] Android TV image profile support (auto-detect ATV images, set display props)
-- [ ] Extension dependency resolution (auto-install `libhoudini` before `gapps`)
-- [ ] Snapshot support — ZFS/btrfs subvolume snapshots of image profiles
-- [ ] Multi-user support (per-user Waydroid instances)
-- [ ] D-Bus service mode — expose toolkit operations over D-Bus
-- [ ] GNOME Shell extension integration (status indicator, quick-launch)
-
-## v1.0 — Stable release
-
-- [ ] Stable public API for `modules/` (semver guarantees)
-- [ ] Full documentation site (MkDocs)
-- [ ] Automated CI with matrix testing across Debian, Ubuntu, Fedora, Arch
-- [ ] Integration test suite (requires live Waydroid session)
+- [ ] GitHub Actions CI extended: unit tests, lint, type-check on every
+      push/PR; coverage for `wdt dbus`, `wdt snapshot`; integration test
+      reporting
+- [ ] Signed packages (GPG-signed `.deb` / `.rpm`, AUR `.sig`)
+- [ ] Flatpak release on Flathub (real SHA256 sums, Flathub review)
+- [ ] Wayland-native screenshot / screen record (no ADB dependency)
+- [ ] `wdt dbus serve` systemd user unit template
+- [ ] PyPI publish workflow (Trusted Publisher, GitHub release trigger)
 - [ ] Signed releases on PyPI and distribution packages
 - [ ] Migration guide from `casualsnek/waydroid_script` and `waydroid-helper`
 
