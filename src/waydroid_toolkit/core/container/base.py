@@ -130,6 +130,21 @@ class ContainerBackend(ABC):
         """Delete a named snapshot."""
         ...
 
+    @abstractmethod
+    def snapshot_auto_set(self, schedule: str, expiry: str = "", pattern: str = "snap-%d") -> None:
+        """Configure an automatic snapshot schedule via incus config."""
+        ...
+
+    @abstractmethod
+    def snapshot_auto_show(self) -> dict[str, str]:
+        """Return current auto-snapshot config keys: schedule, expiry, pattern."""
+        ...
+
+    @abstractmethod
+    def snapshot_auto_disable(self) -> None:
+        """Remove the automatic snapshot schedule."""
+        ...
+
     # ── Console ───────────────────────────────────────────────────────────────
 
     @abstractmethod

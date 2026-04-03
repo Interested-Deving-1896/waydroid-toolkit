@@ -12,6 +12,7 @@ from waydroid_toolkit.cli.commands.container import cmd as container_cmd
 def _make_backend(
     snapshot_names: list[str] | None = None,
     raises: type[Exception] | None = None,
+    auto_cfg: dict[str, str] | None = None,
 ) -> MagicMock:
     b = MagicMock()
     if raises is not None:
@@ -20,8 +21,16 @@ def _make_backend(
         b.snapshot_restore.side_effect = raises("Incus backend required")
         b.snapshot_delete.side_effect = raises("Incus backend required")
         b.console.side_effect = raises("Incus backend required")
+        b.snapshot_auto_set.side_effect = raises("Incus backend required")
+        b.snapshot_auto_show.side_effect = raises("Incus backend required")
+        b.snapshot_auto_disable.side_effect = raises("Incus backend required")
     else:
         b.snapshot_list.return_value = snapshot_names or []
+        b.snapshot_auto_show.return_value = auto_cfg or {
+            "snapshots.schedule": "@daily",
+            "snapshots.expiry": "7d",
+            "snapshots.pattern": "snap-%d",
+        }
     return b
 
 
@@ -133,4 +142,67 @@ class TestContainerConsole:
         mock_b = _make_backend(raises=NotImplementedError)
         with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
             result = runner.invoke(container_cmd, ["console"])
+        assert result.exit_code != 0
+
+
+class TestContainerSnapshotAuto:
+    def test_set_calls_backend(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend()
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "set", "@daily"])
+        assert result.exit_code == 0
+        mock_b.snapshot_auto_set.assert_called_once_with("@daily", "", "snap-%d")
+
+    def test_set_with_expiry_and_pattern(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend()
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(
+                container_cmd,
+                ["snapshot-auto", "set", "@weekly", "--expiry", "30d", "--pattern", "auto-%d"],
+            )
+        assert result.exit_code == 0
+        mock_b.snapshot_auto_set.assert_called_once_with("@weekly", "30d", "auto-%d")
+
+    def test_set_lxc_backend_exits_nonzero(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(raises=NotImplementedError)
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "set", "@daily"])
+        assert result.exit_code != 0
+
+    def test_show_displays_schedule(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(auto_cfg={
+            "snapshots.schedule": "@daily",
+            "snapshots.expiry": "7d",
+            "snapshots.pattern": "snap-%d",
+        })
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "show"])
+        assert result.exit_code == 0
+        assert "@daily" in result.output
+        assert "7d" in result.output
+
+    def test_show_lxc_backend_exits_nonzero(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(raises=NotImplementedError)
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "show"])
+        assert result.exit_code != 0
+
+    def test_disable_calls_backend(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend()
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "disable"])
+        assert result.exit_code == 0
+        mock_b.snapshot_auto_disable.assert_called_once()
+
+    def test_disable_lxc_backend_exits_nonzero(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(raises=NotImplementedError)
+        with patch("waydroid_toolkit.cli.commands.container.get_backend", return_value=mock_b):
+            result = runner.invoke(container_cmd, ["snapshot-auto", "disable"])
         assert result.exit_code != 0

@@ -466,6 +466,42 @@ class IncusBackend(ContainerBackend):
             check=True,
         )
 
+    def snapshot_auto_set(self, schedule: str, expiry: str = "", pattern: str = "snap-%d") -> None:
+        subprocess.run(
+            ["incus", "config", "set", self.CONTAINER_NAME, "snapshots.schedule", schedule],
+            check=True,
+        )
+        subprocess.run(
+            ["incus", "config", "set", self.CONTAINER_NAME, "snapshots.pattern", pattern],
+            check=True,
+        )
+        subprocess.run(
+            ["incus", "config", "set", self.CONTAINER_NAME, "snapshots.schedule.stopped", "false"],
+            check=True,
+        )
+        if expiry:
+            subprocess.run(
+                ["incus", "config", "set", self.CONTAINER_NAME, "snapshots.expiry", expiry],
+                check=True,
+            )
+
+    def snapshot_auto_show(self) -> dict[str, str]:
+        keys = ("snapshots.schedule", "snapshots.expiry", "snapshots.pattern")
+        result: dict[str, str] = {}
+        for key in keys:
+            r = subprocess.run(
+                ["incus", "config", "get", self.CONTAINER_NAME, key],
+                capture_output=True, text=True,
+            )
+            result[key] = r.stdout.strip() if r.returncode == 0 else "(not set)"
+        return result
+
+    def snapshot_auto_disable(self) -> None:
+        subprocess.run(
+            ["incus", "config", "unset", self.CONTAINER_NAME, "snapshots.schedule"],
+            check=False,
+        )
+
     # ── Console ───────────────────────────────────────────────────────────────
 
     def console(self) -> None:

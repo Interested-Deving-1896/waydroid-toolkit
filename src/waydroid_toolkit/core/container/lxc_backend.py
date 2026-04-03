@@ -141,6 +141,17 @@ class LxcBackend(ContainerBackend):
     def snapshot_delete(self, name: str) -> None:  # noqa: ARG002
         raise NotImplementedError(_INCUS_ONLY_MSG)
 
+    def snapshot_auto_set(  # noqa: ARG002
+        self, schedule: str, expiry: str = "", pattern: str = "snap-%d"
+    ) -> None:
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    def snapshot_auto_show(self) -> dict[str, str]:
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    def snapshot_auto_disable(self) -> None:
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
     # ── Console (Incus-only) ──────────────────────────────────────────────────
 
     def console(self) -> None:
