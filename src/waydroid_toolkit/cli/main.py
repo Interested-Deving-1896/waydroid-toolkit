@@ -15,6 +15,8 @@ Commands:
     backup        Backup and restore Waydroid data
     performance   Apply/remove host performance tuning
     maintenance   Display settings, screenshots, logcat, file transfer, debloat
+    storage       Manage shared storage (NFS/EFS/disk) for the container
+    stream        Mirror the Waydroid display via scrcpy
 """
 
 import click
@@ -42,6 +44,8 @@ from .commands import (
     performance,
     snapshot,
     status,
+    storage,
+    stream,
     template,
     update,
     usb,
@@ -98,3 +102,5 @@ cli.add_command(net.cmd, name="net")
 cli.add_command(usb.cmd, name="usb")
 cli.add_command(gpu.cmd, name="gpu")
 cli.add_command(dbus.cmd, name="dbus")
+cli.add_command(storage.cmd, name="storage")
+cli.add_command(stream.cmd, name="stream")

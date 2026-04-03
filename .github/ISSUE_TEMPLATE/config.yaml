@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://waydroid-toolkit.github.io/waydroid-toolkit/
+    about: Read the docs before filing an issue.
+  - name: Waydroid upstream
+    url: https://github.com/waydroid/waydroid/issues
+    about: For issues with Waydroid itself (not wdt), file upstream.

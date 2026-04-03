@@ -1,0 +1,79 @@
+name: Setup Waydroid Cloud
+description: |
+  Set up Waydroid on a GitHub runner for running integration tests against
+  containerized Android instances via Incus + Waydroid.
+
+inputs:
+  incus-channel:
+    default: stable
+    description: Snap channel of the incus snap to use
+    required: false
+    type: string
+  waydroid-channel:
+    default: stable
+    description: Snap channel of the waydroid snap to use
+    required: false
+    type: string
+  storage-size:
+    default: 30
+    description: Size of the Incus storage pool in GiB
+    required: false
+    type: number
+  android-version:
+    default: "13"
+    description: Android version to use for the Waydroid image
+    required: false
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Install Incus
+      shell: bash
+      env:
+        INCUS_CHANNEL: ${{ inputs.incus-channel }}
+      run: |
+        sudo snap install incus --channel="${INCUS_CHANNEL}"
+        sudo incus admin init --auto \
+          --storage-backend=dir \
+          --storage-create-device="" \
+          --storage-create-loop=${{ inputs.storage-size }}
+
+    - name: Install Waydroid
+      shell: bash
+      env:
+        WAYDROID_CHANNEL: ${{ inputs.waydroid-channel }}
+      run: |
+        sudo snap install waydroid --channel="${WAYDROID_CHANNEL}" || \
+          sudo apt-get install -y waydroid
+
+    - name: Install waydroid-toolkit
+      shell: bash
+      run: |
+        pip install waydroid-toolkit
+
+    - name: Initialize Waydroid
+      shell: bash
+      env:
+        ANDROID_VERSION: ${{ inputs.android-version }}
+      run: |
+        # Initialize Waydroid with the requested Android version image
+        sudo waydroid init -s GAPPS -f \
+          -i "https://sourceforge.net/projects/waydroid/files/images/system/lineage/waydroid_x86_64/lineage-${ANDROID_VERSION}.0-$(date +%Y%m%d)-VANILLA-waydroid_x86_64-system.zip" \
+          || sudo waydroid init -f
+        sudo systemctl enable --now waydroid-container
+
+    - name: Wait for Waydroid to be ready
+      shell: bash
+      run: |
+        for i in $(seq 1 30); do
+          if waydroid status 2>/dev/null | grep -q "Session:\s*RUNNING"; then
+            echo "Waydroid is ready"
+            exit 0
+          fi
+          echo "Waiting for Waydroid... ($i/30)"
+          sleep 5
+        done
+        echo "Waydroid did not become ready in time" >&2
+        waydroid log || true
+        exit 1

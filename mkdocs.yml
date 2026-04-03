@@ -57,12 +57,20 @@ nav:
     - backup: cli/backup.md
     - packages: cli/packages.md
     - performance: cli/performance.md
+    - storage: cli/storage.md
+    - stream: cli/stream.md
   - Modules:
     - Extensions: modules/extensions.md
     - Images & ATV: modules/images.md
     - Snapshots: modules/snapshot.md
     - D-Bus Service: modules/dbus.md
     - Maintenance: modules/maintenance.md
+    - Storage (NFS): modules/storage.md
+    - Streaming: modules/streaming.md
+  - Infrastructure:
+    - GitHub Action: infra/github-action.md
+    - Terraform: infra/terraform.md
+    - CI Demos: infra/demos.md
   - Development:
     - Contributing: development/contributing.md
     - Architecture: development/architecture.md

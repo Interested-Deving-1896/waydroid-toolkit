@@ -192,6 +192,18 @@ jobs:
       - name: wdt install --help shows --backend option
         run: wdt install --help | grep -q "\-\-backend"
 
+      - name: wdt storage --help
+        run: wdt storage --help
+
+      - name: wdt storage nfs --help
+        run: wdt storage nfs --help
+
+      - name: wdt stream --help
+        run: wdt stream --help
+
+      - name: wdt stream check (no scrcpy — must not crash)
+        run: wdt stream check || true
+
   # ── Docs build ─────────────────────────────────────────────────────────────
   docs:
     name: Build docs (MkDocs)

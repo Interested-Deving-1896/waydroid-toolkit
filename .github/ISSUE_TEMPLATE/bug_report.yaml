@@ -1,0 +1,67 @@
+name: Bug report
+description: Report a bug in waydroid-toolkit
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check [existing issues](https://github.com/waydroid-toolkit/waydroid-toolkit/issues)
+        and run `wdt doctor` to collect diagnostic information.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `wdt ...`
+        2. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: wdt doctor output
+      description: Run `wdt doctor` and paste the output here.
+      render: text
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Container backend
+      options:
+        - Incus
+        - LXC (native)
+        - Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Host OS and version
+      placeholder: "e.g. Ubuntu 24.04, Arch Linux 2025-01"
+    validations:
+      required: true
+
+  - type: input
+    id: wdt_version
+    attributes:
+      label: waydroid-toolkit version
+      placeholder: "wdt --version"
+    validations:
+      required: true
+
+  - type: input
+    id: waydroid_version
+    attributes:
+      label: Waydroid version
+      placeholder: "waydroid --version"

@@ -1,0 +1,48 @@
+name: Now in Android CI
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  nia-ci:
+    name: Lint, Unit Tests, Screenshot Tests, Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Run lint
+        working-directory: demos/nowinandroid
+        run: make nia-lint
+
+      - name: Run unit tests
+        working-directory: demos/nowinandroid
+        run: make nia-unit-test
+
+      - name: Run screenshot tests
+        working-directory: demos/nowinandroid
+        run: make nia-screenshot-test
+
+      - name: Build DemoDebug APK
+        working-directory: demos/nowinandroid
+        run: make nia-build
+
+      - name: Upload reports and APK
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nia-ci-reports
+          path: |
+            demos/nowinandroid/app/build/reports/
+            demos/nowinandroid/app/build/outputs/apk/

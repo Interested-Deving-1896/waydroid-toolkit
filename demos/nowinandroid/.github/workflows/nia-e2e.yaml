@@ -1,0 +1,73 @@
+name: Now in Android E2E on Waydroid
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  nia-e2e:
+    name: Setup Waydroid and Run E2E Tests
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_VERSION: "13"
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Setup Waydroid
+        # Ported from canonical/anbox-cloud-github-action.
+        # LXD + Anbox Cloud Appliance replaced with Incus + Waydroid.
+        uses: ./.github/actions/waydroid-cloud
+        with:
+          android-version: ${{ env.ANDROID_VERSION }}
+
+      - name: Connect ADB to Waydroid
+        run: |
+          sudo apt-get install -y adb
+          # Waydroid exposes ADB on the container bridge IP
+          ADB_ADDR=$(waydroid prop get waydroid.host.address 2>/dev/null \
+            || ip -4 addr show waydroid0 2>/dev/null \
+               | grep -oP '(?<=inet )\d+\.\d+\.\d+\.\d+' \
+            || echo "192.168.240.112")
+          adb connect "${ADB_ADDR}":5555
+          adb wait-for-device
+          echo "ADB_ADDR=${ADB_ADDR}" >> "$GITHUB_ENV"
+
+      - name: Run E2E tests
+        working-directory: demos/nowinandroid
+        run: make nia-e2e-test
+
+      - name: Upload E2E test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nia-e2e-test-reports
+          path: "**/build/reports/androidTests/**"
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          waydroid log || true
+          journalctl -u waydroid-container --no-pager -n 100 || true
+
+      - name: Upload logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: logs-dump-${{ github.run_id }}
+          path: "*.log"
+          retention-days: 30
+
+      - name: Stop Waydroid
+        if: always()
+        run: waydroid session stop || true

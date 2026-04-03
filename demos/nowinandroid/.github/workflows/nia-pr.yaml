@@ -1,0 +1,17 @@
+name: Now in Android PR
+
+on:
+  pull_request:
+    paths:
+      - "demos/nowinandroid/app/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/nia-ci.yaml
+
+  e2e:
+    uses: ./.github/workflows/nia-e2e.yaml
+    secrets: inherit

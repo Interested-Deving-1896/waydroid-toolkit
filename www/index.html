@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>waydroid-toolkit — Unified management suite for Waydroid</title>
+  <meta name="description"
+    content="waydroid-toolkit (wdt) is an open-source CLI and Python library for managing Waydroid — Android-in-a-container on Linux via Incus or LXC." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="container">
+      <div class="logo">
+        <span class="logo-text">waydroid-toolkit</span>
+        <span class="logo-tag">wdt</span>
+      </div>
+      <nav>
+        <a href="https://waydroid-toolkit.github.io/waydroid-toolkit/">Docs</a>
+        <a href="https://github.com/waydroid-toolkit/waydroid-toolkit">GitHub</a>
+        <a href="https://github.com/waydroid-toolkit/waydroid-toolkit/releases">Releases</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Hero ───────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <h1>Android on Linux, managed.</h1>
+      <p class="hero-sub">
+        <strong>waydroid-toolkit</strong> is an open-source CLI and Python library
+        for managing <a href="https://waydro.id/">Waydroid</a> — Android-in-a-container
+        on Linux via <a href="https://linuxcontainers.org/incus/">Incus</a> or LXC.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://waydroid-toolkit.github.io/waydroid-toolkit/getting-started/quickstart/">
+          Get started
+        </a>
+        <a class="btn btn-secondary" href="https://github.com/waydroid-toolkit/waydroid-toolkit">
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-install">
+        <code>pip install waydroid-toolkit</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ───────────────────────────────────────────────────────── -->
+  <section class="features">
+    <div class="container">
+      <h2>What wdt does</h2>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <h3>Container management</h3>
+          <p>
+            Start, stop, snapshot, export, and import the Waydroid container.
+            Supports both Incus and native LXC backends.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Extensions</h3>
+          <p>
+            Install GApps, Magisk, ARM translation, microG, Widevine, and
+            keymapper with a single command.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Images</h3>
+          <p>
+            Manage Waydroid image profiles, OTA updates, and AndroidTV images.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Streaming</h3>
+          <p>
+            Mirror the Waydroid display via <a href="https://github.com/Genymobile/scrcpy">scrcpy</a>
+            over ADB. Record sessions, forward audio, and control from the host.
+            Ported from <a href="https://github.com/canonical/anbox-streaming-sdk">anbox-streaming-sdk</a>.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Shared storage</h3>
+          <p>
+            Mount NFS shares and local directories into the Waydroid container
+            via <code>incus config device</code>.
+            Ported from <a href="https://github.com/canonical/anbox-cloud-nfs-operator">anbox-cloud-nfs-operator</a>.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>CI / GitHub Actions</h3>
+          <p>
+            Run Android UI screenshot tests and E2E instrumented tests on GitHub
+            runners using Waydroid as the Android backend.
+            Ported from <a href="https://github.com/canonical/anbox-cloud-github-action">anbox-cloud-github-action</a>
+            and <a href="https://github.com/canonical/anbox-cloud-demos">anbox-cloud-demos</a>.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Terraform</h3>
+          <p>
+            Provision Incus containers running Waydroid with the
+            <a href="https://registry.terraform.io/providers/lxc/incus/latest">incus Terraform provider</a>.
+            Ported from <a href="https://github.com/canonical/anbox-cloud-terraform">anbox-cloud-terraform</a>.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Packages &amp; ADB</h3>
+          <p>
+            Install and remove APKs, manage F-Droid repos, run ADB commands,
+            and forward USB devices into the container.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Quick example ──────────────────────────────────────────────────── -->
+  <section class="quickstart">
+    <div class="container">
+      <h2>Quick start</h2>
+      <pre><code># Install
+pip install waydroid-toolkit
+
+# Check status
+wdt status
+
+# Install GApps
+wdt extensions install gapps
+
+# Mirror display
+wdt stream start
+
+# Mount NFS share
+wdt storage nfs add 192.168.1.10:/exports/assets
+
+# Snapshot
+wdt container snapshot create before-update</code></pre>
+    </div>
+  </section>
+
+  <!-- ── Anbox migration note ───────────────────────────────────────────── -->
+  <section class="migration">
+    <div class="container">
+      <h2>Migrating from Anbox Cloud?</h2>
+      <p>
+        waydroid-toolkit incorporates tooling ported from nine
+        <a href="https://github.com/canonical">Canonical</a> Anbox Cloud repositories,
+        replacing LXD with Incus and Anbox with Waydroid throughout.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Anbox Cloud repo</th><th>waydroid-toolkit equivalent</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>anbox-cloud-github-action</td><td>.github/actions/waydroid-cloud</td></tr>
+          <tr><td>anbox-cloud-nfs-operator</td><td>wdt storage nfs</td></tr>
+          <tr><td>anbox-cloud-demos</td><td>demos/nowinandroid</td></tr>
+          <tr><td>anbox-cloud-terraform</td><td>terraform/ (incus provider)</td></tr>
+          <tr><td>anbox-streaming-sdk</td><td>wdt stream (scrcpy)</td></tr>
+          <tr><td>anbox-cloud-templates</td><td>.github/ISSUE_TEMPLATE</td></tr>
+          <tr><td>anbox-cloud-docs</td><td>docs/</td></tr>
+          <tr><td>anbox-cloud.github.com</td><td>site/</td></tr>
+          <tr><td>anbox-cloud.io</td><td>site/</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        waydroid-toolkit is licensed under
+        <a href="https://github.com/waydroid-toolkit/waydroid-toolkit/blob/main/LICENSE">GPL-3.0</a>.
+        Ported Canonical code was Apache-2.0; relicensed under GPL-3.0 per
+        Apache-2.0 / GPL-3.0 compatibility.
+      </p>
+      <p>
+        <a href="https://github.com/waydroid-toolkit/waydroid-toolkit">GitHub</a> ·
+        <a href="https://waydroid-toolkit.github.io/waydroid-toolkit/">Documentation</a> ·
+        <a href="https://github.com/waydroid-toolkit/waydroid-toolkit/issues">Issues</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>
