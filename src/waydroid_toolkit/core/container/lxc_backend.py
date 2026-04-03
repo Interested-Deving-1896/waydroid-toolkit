@@ -5,6 +5,13 @@ that upstream waydroid/waydroid configures and uses internally.
 
 This backend is the default and matches the behaviour of a standard
 Waydroid installation.
+
+Write-operation gating
+----------------------
+Snapshot, console, and other write operations that have no safe LXC
+equivalent raise ``NotImplementedError`` with a message directing the
+user to switch to the Incus backend.  Read-only operations (state,
+execute) continue to work on LXC.
 """
 
 from __future__ import annotations
@@ -13,6 +20,11 @@ import shutil
 import subprocess
 
 from .base import BackendInfo, BackendType, ContainerBackend, ContainerState
+
+_INCUS_ONLY_MSG = (
+    "This operation requires the Incus backend.\n"
+    "Switch with: wdt backend set incus"
+)
 
 
 class LxcBackend(ContainerBackend):
@@ -114,3 +126,22 @@ class LxcBackend(ContainerBackend):
             text=True,
             timeout=timeout,
         )
+
+    # ── Snapshots (Incus-only) ────────────────────────────────────────────────
+
+    def snapshot_create(self, name: str) -> None:  # noqa: ARG002
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    def snapshot_list(self) -> list[str]:
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    def snapshot_restore(self, name: str) -> None:  # noqa: ARG002
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    def snapshot_delete(self, name: str) -> None:  # noqa: ARG002
+        raise NotImplementedError(_INCUS_ONLY_MSG)
+
+    # ── Console (Incus-only) ──────────────────────────────────────────────────
+
+    def console(self) -> None:
+        raise NotImplementedError(_INCUS_ONLY_MSG)

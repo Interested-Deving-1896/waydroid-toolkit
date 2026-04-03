@@ -433,6 +433,45 @@ class IncusBackend(ContainerBackend):
             timeout=timeout,
         )
 
+    # ── Snapshots ─────────────────────────────────────────────────────────────
+
+    def snapshot_create(self, name: str) -> None:
+        subprocess.run(
+            ["incus", "snapshot", "create", self.CONTAINER_NAME, name],
+            check=True,
+        )
+
+    def snapshot_list(self) -> list[str]:
+        result = subprocess.run(
+            ["incus", "info", self.CONTAINER_NAME, "--format", "json"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+        data = json.loads(result.stdout)
+        snapshots = data.get("snapshots", []) or []
+        return [s.get("name", "") for s in snapshots if s.get("name")]
+
+    def snapshot_restore(self, name: str) -> None:
+        subprocess.run(
+            ["incus", "snapshot", "restore", self.CONTAINER_NAME, name],
+            check=True,
+        )
+
+    def snapshot_delete(self, name: str) -> None:
+        subprocess.run(
+            ["incus", "snapshot", "delete", self.CONTAINER_NAME, name],
+            check=True,
+        )
+
+    # ── Console ───────────────────────────────────────────────────────────────
+
+    def console(self) -> None:
+        import os
+        os.execvp("incus", ["incus", "console", self.CONTAINER_NAME])
+
     # ── Session configuration ─────────────────────────────────────────────────
 
     def configure_session(self, session: SessionConfig) -> None:

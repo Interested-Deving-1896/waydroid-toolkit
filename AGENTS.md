@@ -287,6 +287,98 @@ intended for local development and pre-release validation.
 
 ---
 
+## wdt container — Incus-level container operations
+
+`src/waydroid_toolkit/cli/commands/container.py`
+
+Provides `wdt container snapshot` and `wdt container console` — operations
+that act on the Waydroid container via the active backend.
+
+**Note:** `wdt snapshot` (in `commands/snapshot.py`) is a separate command
+that manages **filesystem-level snapshots** (ZFS/btrfs) of the Waydroid data
+directory. `wdt container snapshot` manages **Incus container snapshots**
+(point-in-time state of the running container). Both are valid and serve
+different purposes.
+
+| Command | What it snapshots |
+|---|---|
+| `wdt snapshot create` | ZFS/btrfs filesystem snapshot of `/var/lib/waydroid` |
+| `wdt container snapshot create` | Incus container state snapshot |
+
+`wdt container console` and `wdt container snapshot *` require the Incus
+backend. When the LXC backend is active, these commands raise a clear
+`NotImplementedError` with a message directing the user to
+`wdt backend set incus`.
+
+---
+
+## wdt assemble — declarative configuration
+
+`src/waydroid_toolkit/cli/commands/assemble.py`
+
+Applies a YAML configuration file idempotently. Unlike incusbox/imt which
+manage fleets of containers, Waydroid has a single container — so `wdt assemble`
+configures that single instance: backend, image type, extensions, performance.
+
+```yaml
+waydroid:
+  backend: incus          # incus | lxc
+  image_type: VANILLA     # VANILLA | GAPPS
+  arch: x86_64            # x86_64 | arm64
+  extensions:
+    - gapps
+    - widevine
+  performance:
+    zram_size: 4096
+    zram_algo: lz4
+    governor: performance
+```
+
+Uses PyYAML when available; falls back to a minimal built-in parser for
+environments without it. See `data/example-assemble.yaml`.
+
+---
+
+## ContainerBackend — write-operation gating
+
+`LxcBackend` implements the full `ContainerBackend` ABC but raises
+`NotImplementedError` for write operations that have no safe LXC equivalent:
+
+- `snapshot_create`, `snapshot_list`, `snapshot_restore`, `snapshot_delete`
+- `console`
+
+Read-only operations (`get_state`, `execute`, `get_info`) continue to work
+on LXC. This allows existing LXC users to query state without breaking, while
+making the limitation explicit for write operations.
+
+The error message always includes `"wdt backend set incus"` so users know
+exactly how to resolve it.
+
+---
+
+## Intentional divergence from other Incus projects
+
+The following features exist in other projects in this suite but are
+**intentionally absent** from waydroid-toolkit because they are
+Android-specific or Waydroid-specific concepts with no equivalent elsewhere:
+
+| Feature | Reason absent |
+|---|---|
+| `extensions` (GApps, Magisk, ARM translation, microG) | Android-specific; no equivalent in Linux containers or macOS VMs |
+| `performance` (ZRAM, GameMode, CPU governor) | Android gaming tuning; not applicable to general containers |
+| `wdt snapshot` (ZFS/btrfs) | Waydroid data directory layout is Android-specific |
+| `wdt build` (penguins-eggs) | Android image build pipeline; not applicable elsewhere |
+| `wdt dbus` | Waydroid session D-Bus interface; Android-specific |
+| `wdt maintenance` (logcat, screenshots, debloat) | Android device management; not applicable elsewhere |
+| `wdt packages` (F-Droid, APK install) | Android package management |
+| `wdt images` (OTA image profiles) | Waydroid OTA channel; Android-specific |
+| `remoteapp` / GPU passthrough | Not yet implemented; planned for Incus backend |
+| macOS image pipeline (OVMF, OpenCore) | macOS-specific boot chain |
+
+These are not gaps — they are correct omissions for an Android container manager.
+
+---
+
 ## Adding a new CLI command
 
 1. Create `src/waydroid_toolkit/cli/commands/<group>.py` with a
