@@ -273,7 +273,7 @@ def demo_test() -> None:
             console.print(f"  [green]✓[/green] {endpoint}")
         except subprocess.CalledProcessError:
             console.print(f"  [red]✗[/red] {endpoint} — not responding")
-            console.print(f"Is the server running? Try: wdt demo start")
+            console.print("Is the server running? Try: wdt demo start")
             raise SystemExit(1)
 
     console.print()

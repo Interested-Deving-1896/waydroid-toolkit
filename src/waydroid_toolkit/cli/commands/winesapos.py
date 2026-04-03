@@ -262,7 +262,7 @@ def ws_list() -> None:
         ["incus", "list", "--format", "table"],
         capture_output=True, text=True,
     )
-    lines = [l for l in result.stdout.splitlines() if "winesapos" in l.lower()]
+    lines = [ln for ln in result.stdout.splitlines() if "winesapos" in ln.lower()]
     if lines:
         for line in lines:
             console.print(line)
