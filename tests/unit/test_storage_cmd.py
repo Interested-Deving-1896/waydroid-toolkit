@@ -86,7 +86,5 @@ class TestStorageNfsRemove:
     def test_remove_aborted(self):
         runner = CliRunner()
         with patch(_REMOVE) as mock_rm:
-            result = runner.invoke(
-                cli, ["storage", "nfs", "remove", "nfs-share"], input="n\n"
-            )
-        mock_rm.assert_not_called()
+            runner.invoke(cli, ["storage", "nfs", "remove", "nfs-share"], input="n\n")
+            mock_rm.assert_not_called()

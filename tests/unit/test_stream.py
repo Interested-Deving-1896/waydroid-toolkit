@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import signal
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
