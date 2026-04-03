@@ -21,6 +21,7 @@ Commands:
     tui             Launch interactive terminal UI (requires dialog or whiptail)
     dashboard       Serve a web monitoring dashboard for Waydroid containers
     host-exec       Run a host command from inside the Waydroid container
+    completion      Generate shell completion script (bash|zsh|fish)
     disk          Live disk resize for the Waydroid container
     profiles      Manage Waydroid image profiles
     upgrade       Upgrade the Waydroid Android image via OTA
@@ -43,6 +44,7 @@ from .commands import (
     backup,
     build,
     cloud_sync,
+    completion,
     config,
     container,
     dashboard,
@@ -121,6 +123,7 @@ cli.add_command(fleet.cmd, name="fleet")
 cli.add_command(publish.cmd, name="publish")
 cli.add_command(shell.cmd, name="shell")
 cli.add_command(config.cmd, name="config")
+cli.add_command(completion.cmd, name="completion")
 cli.add_command(setup_rootless.cmd, name="setup-rootless")
 cli.add_command(tui.cmd, name="tui")
 cli.add_command(dashboard.cmd, name="dashboard")
