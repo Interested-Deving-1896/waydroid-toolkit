@@ -1,0 +1,7 @@
+# wdt template: minimal
+# Low-resource Waydroid container for testing.
+description: "Minimal Waydroid container for testing with low resource usage"
+
+resources:
+  cpu: 2
+  memory: 2GiB

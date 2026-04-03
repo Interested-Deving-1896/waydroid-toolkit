@@ -1,0 +1,11 @@
+# wdt template: gaming
+# High-resource Waydroid container optimised for gaming workloads.
+description: "Gaming-optimised Waydroid container with high CPU and memory"
+
+resources:
+  cpu: 8
+  memory: 8GiB
+
+performance:
+  governor: performance
+  zram: true

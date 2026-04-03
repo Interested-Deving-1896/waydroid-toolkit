@@ -40,6 +40,7 @@ from .commands import (
     performance,
     snapshot,
     status,
+    template,
 )
 
 console = Console()
@@ -87,4 +88,5 @@ cli.add_command(maintenance.cmd, name="maintenance")
 cli.add_command(snapshot.cmd, name="snapshot")
 cli.add_command(container.cmd, name="container")
 cli.add_command(cloud_sync.cmd, name="cloud-sync")
+cli.add_command(template.cmd, name="template")
 cli.add_command(dbus.cmd, name="dbus")
