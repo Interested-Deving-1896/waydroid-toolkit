@@ -101,6 +101,58 @@ def snapshot_delete(name: str) -> None:
     console.print(f"[green]Deleted snapshot:[/green] {name}")
 
 
+@cmd.group("snapshot-auto")
+def container_snapshot_auto() -> None:
+    """Manage automatic snapshot schedules for the Waydroid container."""
+
+
+@container_snapshot_auto.command("set")
+@click.argument("schedule")
+@click.option("--expiry", default="", help="Auto-delete after duration (e.g. 7d, 30d).")
+@click.option("--pattern", default="snap-%d", show_default=True, help="Snapshot naming pattern.")
+def snapshot_auto_set(schedule: str, expiry: str, pattern: str) -> None:
+    """Set an automatic snapshot schedule.
+
+    SCHEDULE accepts cron expressions or shorthand (@daily, @weekly, etc.).
+    """
+    b = _backend()
+    try:
+        b.snapshot_auto_set(schedule, expiry, pattern)  # type: ignore[attr-defined]
+    except NotImplementedError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise SystemExit(1) from exc
+    console.print(f"[green]Auto-snapshot configured:[/green] {schedule}")
+    if expiry:
+        console.print(f"  Expiry  : {expiry}")
+    console.print(f"  Pattern : {pattern}")
+
+
+@container_snapshot_auto.command("show")
+def snapshot_auto_show() -> None:
+    """Show the current automatic snapshot schedule."""
+    b = _backend()
+    try:
+        cfg = b.snapshot_auto_show()  # type: ignore[attr-defined]
+    except NotImplementedError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise SystemExit(1) from exc
+    console.print(f"  Schedule : {cfg.get('snapshots.schedule', '(not set)')}")
+    console.print(f"  Expiry   : {cfg.get('snapshots.expiry', '(not set)')}")
+    console.print(f"  Pattern  : {cfg.get('snapshots.pattern', '(not set)')}")
+
+
+@container_snapshot_auto.command("disable")
+def snapshot_auto_disable() -> None:
+    """Remove the automatic snapshot schedule."""
+    b = _backend()
+    try:
+        b.snapshot_auto_disable()  # type: ignore[attr-defined]
+    except NotImplementedError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise SystemExit(1) from exc
+    console.print("[green]Auto-snapshot disabled.[/green]")
+
+
 # ── console ───────────────────────────────────────────────────────────────────
 
 @cmd.command("console")

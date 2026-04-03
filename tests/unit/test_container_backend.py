@@ -221,6 +221,18 @@ class TestLxcBackend:
         with pytest.raises(NotImplementedError, match="Incus backend"):
             LxcBackend().snapshot_delete("snap1")
 
+    def test_snapshot_auto_set_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_auto_set("@daily")
+
+    def test_snapshot_auto_show_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_auto_show()
+
+    def test_snapshot_auto_disable_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_auto_disable()
+
     def test_console_raises_not_implemented(self) -> None:
         with pytest.raises(NotImplementedError, match="Incus backend"):
             LxcBackend().console()
@@ -430,6 +442,46 @@ class TestIncusBackend:
             IncusBackend().snapshot_delete("snap1")
             args = mock_run.call_args[0][0]
             assert args == ["incus", "snapshot", "delete", "waydroid", "snap1"]
+
+    def test_snapshot_auto_set_calls_incus_config(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_auto_set("@daily", expiry="7d", pattern="auto-%d")
+            calls = [c[0][0] for c in mock_run.call_args_list]
+            assert ["incus", "config", "set", "waydroid", "snapshots.schedule", "@daily"] in calls
+            assert ["incus", "config", "set", "waydroid", "snapshots.expiry", "7d"] in calls
+            assert ["incus", "config", "set", "waydroid", "snapshots.pattern", "auto-%d"] in calls
+
+    def test_snapshot_auto_set_no_expiry_skips_expiry_call(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_auto_set("@daily")
+            calls = [c[0][0] for c in mock_run.call_args_list]
+            expiry_calls = [c for c in calls if "snapshots.expiry" in c]
+            assert expiry_calls == []
+
+    def test_snapshot_auto_show_returns_dict(self) -> None:
+        def fake_run(cmd, **_kw):
+            m = MagicMock(returncode=0)
+            if "snapshots.schedule" in cmd:
+                m.stdout = "@daily\n"
+            elif "snapshots.expiry" in cmd:
+                m.stdout = "7d\n"
+            else:
+                m.stdout = "snap-%d\n"
+            return m
+
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run", side_effect=fake_run):
+            result = IncusBackend().snapshot_auto_show()
+        assert result["snapshots.schedule"] == "@daily"
+        assert result["snapshots.expiry"] == "7d"
+
+    def test_snapshot_auto_disable_calls_config_unset(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_auto_disable()
+            args = mock_run.call_args[0][0]
+            assert args == ["incus", "config", "unset", "waydroid", "snapshots.schedule"]
 
     def test_console_calls_execvp(self) -> None:
         with patch("waydroid_toolkit.core.container.incus_backend.os.execvp") as mock_exec:
