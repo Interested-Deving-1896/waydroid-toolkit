@@ -6,11 +6,13 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
+from pytest import skip as pytest_skip
 
-from waydroid_toolkit.cli.commands.assemble import _parse_minimal_yaml
-from waydroid_toolkit.cli.commands.assemble import cmd as assemble_cmd
+from waydroid_toolkit.cli.commands.assemble import (
+    cmd as assemble_cmd,
+    _parse_minimal_yaml,
+)
 
 
 
@@ -141,7 +143,7 @@ class TestAssembleCmd:
         """The committed example file must parse without errors."""
         example = Path(__file__).parent.parent.parent / "data" / "example-assemble.yaml"
         if not example.exists():
-            pytest.skip("example-assemble.yaml not found")
+            pytest_skip("example-assemble.yaml not found")
         runner = CliRunner()
         result = runner.invoke(assemble_cmd, ["--file", str(example), "--dry-run"])
         assert result.exit_code == 0
