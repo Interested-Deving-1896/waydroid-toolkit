@@ -66,7 +66,7 @@ def cloud_push(filter_str: str) -> None:
         raise SystemExit(1)
 
     remote = f"{_remote_name()}:{_remote_path()}/"
-    console.print(f"[bold]Cloud Sync: Push[/bold]")
+    console.print("[bold]Cloud Sync: Push[/bold]")
     console.print(f"  Local  : {backup_dir}")
     console.print(f"  Remote : {remote}")
 
@@ -111,7 +111,7 @@ def cloud_pull(filter_str: str) -> None:
         raise SystemExit(1)
 
     remote = f"{_remote_name()}:{_remote_path()}/"
-    console.print(f"[bold]Cloud Sync: Pull[/bold]")
+    console.print("[bold]Cloud Sync: Pull[/bold]")
     console.print(f"  Remote : {remote}")
     console.print(f"  Local  : {backup_dir}")
 

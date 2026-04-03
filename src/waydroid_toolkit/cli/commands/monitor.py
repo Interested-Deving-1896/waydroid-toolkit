@@ -201,7 +201,7 @@ def monitor_health() -> None:
         ["incus", "storage", "list", "--format", "csv"],
         capture_output=True, text=True,
     )
-    pool_count = len([l for l in pools_r.stdout.splitlines() if l.strip()])
+    pool_count = len([ln for ln in pools_r.stdout.splitlines() if ln.strip()])
     console.print(f"  Storage pools : {pool_count}")
 
     # Networks
@@ -209,7 +209,7 @@ def monitor_health() -> None:
         ["incus", "network", "list", "--format", "csv"],
         capture_output=True, text=True,
     )
-    net_count = len([l for l in net_r.stdout.splitlines() if l.strip()])
+    net_count = len([ln for ln in net_r.stdout.splitlines() if ln.strip()])
     console.print(f"  Networks      : {net_count}")
 
     # Container count
@@ -217,8 +217,8 @@ def monitor_health() -> None:
         ["incus", "list", "--format", "csv", "-c", "s,t"],
         capture_output=True, text=True,
     )
-    ct_total = sum(1 for l in list_r.stdout.splitlines() if "container" in l)
-    ct_running = sum(1 for l in list_r.stdout.splitlines() if "RUNNING" in l and "container" in l)
+    ct_total = sum(1 for ln in list_r.stdout.splitlines() if "container" in ln)
+    ct_running = sum(1 for ln in list_r.stdout.splitlines() if "RUNNING" in ln and "container" in ln)
     console.print(f"  Containers    : {ct_running} running / {ct_total} total")
 
     # Host disk

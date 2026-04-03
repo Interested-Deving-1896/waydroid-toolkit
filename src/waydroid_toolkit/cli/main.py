@@ -32,19 +32,19 @@ from .commands import (
     dbus,
     doctor,
     extensions,
+    gpu,
     images,
     install,
     maintenance,
     monitor,
-    gpu,
     net,
     packages,
-    usb,
     performance,
     snapshot,
     status,
     template,
     update,
+    usb,
 )
 
 console = Console()

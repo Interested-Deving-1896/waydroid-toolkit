@@ -9,6 +9,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from waydroid_toolkit.core.container.backend import get_backend
+
 console = Console()
 
 # Templates ship in data/templates/ relative to the package root.
@@ -127,8 +129,6 @@ def template_apply(name: str, dry_run: bool) -> None:
 
     Sets incus config limits.cpu and limits.memory on the waydroid container.
     """
-    from waydroid_toolkit.core.container.backend import get_backend
-
     tdir = _templates_dir()
     path = tdir / f"{name}.yaml"
     if not path.exists():
