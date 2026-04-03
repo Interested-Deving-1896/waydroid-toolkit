@@ -69,17 +69,8 @@ def backend_detect() -> None:
     )
 
 
-@cmd.command("switch")
-@click.argument("backend_name", metavar="BACKEND", type=click.Choice(["lxc", "incus"]))
-def backend_switch(backend_name: str) -> None:
-    """Switch the active backend to LXC or Incus.
-
-    BACKEND must be one of: lxc, incus
-
-    The chosen backend binary must be present on PATH.
-    For Incus, run 'wdt backend incus setup' after switching to import
-    the Waydroid container configuration into Incus.
-    """
+def _do_switch(backend_name: str) -> None:
+    """Shared implementation for 'switch' and 'set'."""
     backend_type = BackendType(backend_name)
 
     from waydroid_toolkit.core.container import IncusBackend, LxcBackend
@@ -104,6 +95,34 @@ def backend_switch(backend_name: str) -> None:
             "[dim]Run 'wdt backend incus-setup' to import the Waydroid "
             "container config into Incus.[/dim]"
         )
+
+
+@cmd.command("switch")
+@click.argument("backend_name", metavar="BACKEND", type=click.Choice(["lxc", "incus"]))
+def backend_switch(backend_name: str) -> None:
+    """Switch the active backend to LXC or Incus.
+
+    BACKEND must be one of: lxc, incus
+
+    The chosen backend binary must be present on PATH.
+    For Incus, run 'wdt backend incus-setup' after switching to import
+    the Waydroid container configuration into Incus.
+    """
+    _do_switch(backend_name)
+
+
+@cmd.command("set")
+@click.argument("backend_name", metavar="BACKEND", type=click.Choice(["lxc", "incus"]))
+def backend_set(backend_name: str) -> None:
+    """Set the active backend to LXC or Incus (alias for 'switch').
+
+    BACKEND must be one of: lxc, incus
+
+    The chosen backend binary must be present on PATH.
+    For Incus, run 'wdt backend incus-setup' after switching to import
+    the Waydroid container configuration into Incus.
+    """
+    _do_switch(backend_name)
 
 
 @cmd.command("incus-setup")

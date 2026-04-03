@@ -102,6 +102,7 @@ jobs:
           names = zipfile.ZipFile(whl).namelist()
           required = [
               "waydroid_toolkit/py.typed",
+              "waydroid_toolkit/cli/commands/doctor.py",
               "waydroid_toolkit/modules/extensions/resolver.py",
               "waydroid_toolkit/modules/images/androidtv.py",
               "waydroid_toolkit/modules/snapshot/zfs.py",
@@ -175,6 +176,21 @@ jobs:
 
       - name: wdt backup --help
         run: wdt backup --help
+
+      - name: wdt doctor --help
+        run: wdt doctor --help
+
+      - name: wdt doctor --json (no Waydroid — must not crash)
+        run: wdt doctor --json || true
+
+      - name: wdt backend --help
+        run: wdt backend --help
+
+      - name: wdt backend set --help
+        run: wdt backend set --help
+
+      - name: wdt install --help shows --backend option
+        run: wdt install --help | grep -q "\-\-backend"
 
   # ── Docs build ─────────────────────────────────────────────────────────────
   docs:

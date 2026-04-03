@@ -35,7 +35,18 @@ alternative. Both implement `ContainerBackend` (ABC in `base.py`).
 - `incus_backend.py` — wraps `incus` CLI
 - `selector.py` — reads/writes `~/.config/waydroid-toolkit/config.toml`
 
-**Switching backends:** `selector.set_active(BackendType.INCUS)` writes the
+**Default backend:** `selector.detect()` prefers Incus over LXC. When Incus
+is not installed it falls back to LXC and prints a warning to stderr
+directing the user to `wdt backend switch incus`.
+
+**Switching backends at runtime:**
+- `wdt backend switch incus` / `wdt backend set incus` — both call
+  `selector.set_active(BackendType.INCUS)` and persist to config.
+  `set` is an alias for `switch` added for discoverability.
+- `wdt install --backend incus` (default) — activates the chosen backend
+  immediately after `waydroid init` completes.
+
+**Programmatic switch:** `selector.set_active(BackendType.INCUS)` writes the
 config; `selector.get_active()` returns the active backend instance.
 
 **Adding a new backend:** subclass `ContainerBackend`, implement all abstract
@@ -72,6 +83,43 @@ explicit configuration for:
 
 6. **Exec privileges** — `execute()` accepts `uid`, `gid`,
    `disable_apparmor`, `extra_env` → `--user` / `--disable-apparmor`.
+
+---
+
+## wdt doctor
+
+`src/waydroid_toolkit/cli/commands/doctor.py`
+
+Checks prerequisites and runtime environment. Exits 0 when all required
+checks pass (warnings are non-fatal). Exits 1 when any required check fails.
+
+**Checks performed:**
+
+| Check | Required | Notes |
+|---|---|---|
+| `waydroid` binary | ✅ | |
+| waydroid initialized | ✅ | only if binary found |
+| container backend | ✅ | reads active backend from config |
+| `incus` binary | ✅ | only when Incus backend is active |
+| `incus waydroid` container | ✅ | only when Incus backend is active |
+| LXC active but Incus available | ⚠ warning | suggests `wdt backend set incus` |
+| `binder_linux` kernel module | ✅ | |
+| `ashmem_linux` kernel module | ⚠ warning | optional on modern kernels |
+| `/dev/binder`, `/dev/ashmem` | ✅ | |
+| GPU/DMA device nodes | ⚠ warning | optional, needed for GPU accel |
+| `adb` binary | ✅ | |
+| ADB connected | ⚠ warning | only if adb found |
+| audio socket (PipeWire/PA) | ⚠ warning | |
+
+**Adding a new check:** append a `_check()` or `_warn()` call to the `rows`
+list in `cmd()`. Both return a 4-tuple `(label, status, detail, fix)`.
+`_check()` increments `fail_count` on failure; `_warn()` increments
+`warn_count`. Do not raise exceptions from check functions — catch and
+convert to `_check(..., ok=False)`.
+
+**JSON output:** `wdt doctor --json` emits a JSON array of
+`{check, status, detail, fix}` objects. Rich markup is stripped from
+`status` in JSON mode.
 
 ---
 

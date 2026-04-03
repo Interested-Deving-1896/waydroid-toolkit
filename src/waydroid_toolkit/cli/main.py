@@ -27,6 +27,7 @@ from .commands import (
     backup,
     build,
     dbus,
+    doctor,
     extensions,
     images,
     install,
@@ -66,6 +67,7 @@ def cli() -> None:
 
 
 cli.add_command(status.cmd, name="status")
+cli.add_command(doctor.cmd, name="doctor")
 cli.add_command(install.cmd, name="install")
 cli.add_command(build.cmd, name="build")
 cli.add_command(_gui_cmd(), name="gui")

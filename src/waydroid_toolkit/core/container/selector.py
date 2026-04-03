@@ -76,13 +76,34 @@ def _write_config(data: dict) -> None:
 
 
 def detect() -> ContainerBackend:
-    """Return the first available backend (LXC preferred, then Incus)."""
-    for backend_cls in (LxcBackend, IncusBackend):
-        backend = backend_cls()
-        if backend.is_available():
-            return backend
+    """Return the best available backend (Incus preferred, then LXC).
+
+    Incus is preferred because it provides richer introspection, native
+    device-node management, and per-session mount isolation compared to
+    the bare lxc-* CLI tools.  LXC is used as a fallback when Incus is
+    not installed.
+
+    A warning is printed to stderr when LXC is chosen so users know they
+    can upgrade to the Incus backend with 'wdt backend switch incus'.
+    """
+    import sys
+
+    incus = IncusBackend()
+    if incus.is_available():
+        return incus
+
+    lxc = LxcBackend()
+    if lxc.is_available():
+        print(
+            "Warning: Incus not found; falling back to LXC backend.\n"
+            "  For the full feature set, install Incus and run:\n"
+            "    wdt backend switch incus",
+            file=sys.stderr,
+        )
+        return lxc
+
     raise RuntimeError(
-        "No container backend found. Install lxc or incus."
+        "No container backend found. Install incus (recommended) or lxc."
     )
 
 
