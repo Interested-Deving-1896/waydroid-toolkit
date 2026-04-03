@@ -54,8 +54,7 @@ jobs:
         run: pip install "ruff==0.15.9"
 
       - name: Run ruff
-        run: |
-          ruff check src/ tests/ || (ruff check --fix --diff src/ tests/ && exit 1)
+        run: ruff check src/ tests/
 
   # ── Type check ─────────────────────────────────────────────────────────────
   typecheck:

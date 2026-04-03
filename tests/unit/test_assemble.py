@@ -12,8 +12,6 @@ from pytest import skip
 from waydroid_toolkit.cli.commands.assemble import _parse_minimal_yaml
 from waydroid_toolkit.cli.commands.assemble import cmd as assemble_cmd
 
-
-
 # ── YAML parser ───────────────────────────────────────────────────────────────
 
 class TestParseMinimalYaml:
