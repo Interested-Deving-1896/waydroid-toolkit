@@ -27,6 +27,7 @@ from .commands import (
     backend,
     backup,
     build,
+    cloud_sync,
     container,
     dbus,
     doctor,
@@ -85,4 +86,5 @@ cli.add_command(performance.cmd, name="performance")
 cli.add_command(maintenance.cmd, name="maintenance")
 cli.add_command(snapshot.cmd, name="snapshot")
 cli.add_command(container.cmd, name="container")
+cli.add_command(cloud_sync.cmd, name="cloud-sync")
 cli.add_command(dbus.cmd, name="dbus")
