@@ -287,6 +287,30 @@ intended for local development and pre-release validation.
 
 ---
 
+## wdt monitor — container resource stats
+
+`src/waydroid_toolkit/cli/commands/monitor.py`
+
+Provides `wdt monitor status`, `wdt monitor stats`, and `wdt monitor top`.
+Stats are read from `incus info <container> --format json` and parsed from
+the `state.memory`, `state.cpu`, `state.network`, and `state.disk` fields.
+Falls back gracefully when incus is not available.
+
+---
+
+## wdt container export/import — publish as Incus image
+
+`wdt container export [--alias A] [--output PATH]` publishes the Waydroid
+container as a reusable Incus image via `incus publish`. If the container is
+running it is stopped temporarily and restarted after publishing.
+
+`wdt container import --from PATH [--alias A]` imports an image file via
+`incus image import`.
+
+Both commands require the Incus backend.
+
+---
+
 ## wdt container — Incus-level container operations
 
 `src/waydroid_toolkit/cli/commands/container.py`
