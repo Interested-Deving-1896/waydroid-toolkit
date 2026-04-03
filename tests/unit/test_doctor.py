@@ -163,70 +163,82 @@ class TestDoctorCommand:
 class TestInstallBackendOption:
     """Tests for --backend flag on wdt install (change A)."""
 
+    def _base_patches(self) -> list:
+        """Patches that stub out the full install flow so only _activate_backend runs."""
+        return [
+            patch("waydroid_toolkit.cli.commands.install.detect_distro"),
+            patch("waydroid_toolkit.cli.commands.install.install_package"),
+            patch("waydroid_toolkit.cli.commands.install.setup_repo"),
+            patch("waydroid_toolkit.cli.commands.install.is_waydroid_installed", return_value=False),
+            patch("waydroid_toolkit.cli.commands.install.init_waydroid"),
+            patch("waydroid_toolkit.cli.commands.install.AndroidShared"),
+        ]
+
     def test_install_defaults_to_incus(self) -> None:
         from waydroid_toolkit.cli.commands.install import cmd as install_cmd
+        from waydroid_toolkit.utils.distro import Distro
 
         runner = CliRunner()
-        with patch("waydroid_toolkit.cli.commands.install.detect_distro") as mock_distro, \
-             patch("waydroid_toolkit.cli.commands.install.Installer") as mock_installer_cls, \
-             patch("waydroid_toolkit.cli.commands.install.IncusBackend") as mock_incus_cls, \
+        base = self._base_patches()
+        with patch("waydroid_toolkit.cli.commands.install.IncusBackend") as mock_incus_cls, \
              patch("waydroid_toolkit.cli.commands.install.set_active_backend") as mock_set, \
              patch("waydroid_toolkit.cli.commands.install.LxcBackend"):
-            from waydroid_toolkit.utils.distro import Distro
-            mock_distro.return_value = Distro.UBUNTU
-            mock_installer = MagicMock()
-            mock_installer_cls.return_value = mock_installer
+            mocks = [p.start() for p in base]
+            mocks[0].return_value = Distro.UBUNTU
             mock_incus = MagicMock()
             mock_incus.is_available.return_value = True
             mock_incus_cls.return_value = mock_incus
-            mock_incus.get_info.return_value = _make_backend_info()
-
-            result = runner.invoke(install_cmd, [])
+            try:
+                result = runner.invoke(install_cmd, [])
+            finally:
+                for p in base:
+                    p.stop()
 
         mock_set.assert_called_once_with(BackendType.INCUS)
         assert result.exit_code == 0
 
     def test_install_lxc_backend_flag(self) -> None:
         from waydroid_toolkit.cli.commands.install import cmd as install_cmd
+        from waydroid_toolkit.utils.distro import Distro
 
         runner = CliRunner()
-        with patch("waydroid_toolkit.cli.commands.install.detect_distro") as mock_distro, \
-             patch("waydroid_toolkit.cli.commands.install.Installer") as mock_installer_cls, \
-             patch("waydroid_toolkit.cli.commands.install.LxcBackend") as mock_lxc_cls, \
+        base = self._base_patches()
+        with patch("waydroid_toolkit.cli.commands.install.LxcBackend") as mock_lxc_cls, \
              patch("waydroid_toolkit.cli.commands.install.set_active_backend") as mock_set, \
              patch("waydroid_toolkit.cli.commands.install.IncusBackend"):
-            from waydroid_toolkit.utils.distro import Distro
-            mock_distro.return_value = Distro.UBUNTU
-            mock_installer = MagicMock()
-            mock_installer_cls.return_value = mock_installer
+            mocks = [p.start() for p in base]
+            mocks[0].return_value = Distro.UBUNTU
             mock_lxc = MagicMock()
             mock_lxc.is_available.return_value = True
             mock_lxc_cls.return_value = mock_lxc
-            mock_lxc.get_info.return_value = _make_backend_info(BackendType.LXC)
-
-            result = runner.invoke(install_cmd, ["--backend", "lxc"])
+            try:
+                result = runner.invoke(install_cmd, ["--backend", "lxc"])
+            finally:
+                for p in base:
+                    p.stop()
 
         mock_set.assert_called_once_with(BackendType.LXC)
         assert result.exit_code == 0
 
     def test_install_warns_when_backend_unavailable(self) -> None:
         from waydroid_toolkit.cli.commands.install import cmd as install_cmd
+        from waydroid_toolkit.utils.distro import Distro
 
         runner = CliRunner()
-        with patch("waydroid_toolkit.cli.commands.install.detect_distro") as mock_distro, \
-             patch("waydroid_toolkit.cli.commands.install.Installer") as mock_installer_cls, \
-             patch("waydroid_toolkit.cli.commands.install.IncusBackend") as mock_incus_cls, \
+        base = self._base_patches()
+        with patch("waydroid_toolkit.cli.commands.install.IncusBackend") as mock_incus_cls, \
              patch("waydroid_toolkit.cli.commands.install.set_active_backend") as mock_set, \
              patch("waydroid_toolkit.cli.commands.install.LxcBackend"):
-            from waydroid_toolkit.utils.distro import Distro
-            mock_distro.return_value = Distro.UBUNTU
-            mock_installer = MagicMock()
-            mock_installer_cls.return_value = mock_installer
+            mocks = [p.start() for p in base]
+            mocks[0].return_value = Distro.UBUNTU
             mock_incus = MagicMock()
             mock_incus.is_available.return_value = False
             mock_incus_cls.return_value = mock_incus
-
-            result = runner.invoke(install_cmd, ["--backend", "incus"])
+            try:
+                result = runner.invoke(install_cmd, ["--backend", "incus"])
+            finally:
+                for p in base:
+                    p.stop()
 
         mock_set.assert_not_called()
         assert "Warning" in result.output or "warning" in result.output.lower()

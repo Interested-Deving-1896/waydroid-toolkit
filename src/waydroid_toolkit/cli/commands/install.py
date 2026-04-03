@@ -7,6 +7,8 @@ from pathlib import Path
 import click
 from rich.console import Console
 
+from waydroid_toolkit.core.container import BackendType, IncusBackend, LxcBackend
+from waydroid_toolkit.core.container import set_active as set_active_backend
 from waydroid_toolkit.modules.builder.builder import read_manifest
 from waydroid_toolkit.modules.installer.installer import (
     ImageArch,
@@ -17,8 +19,6 @@ from waydroid_toolkit.modules.installer.installer import (
     setup_repo,
 )
 from waydroid_toolkit.utils.android_shared import AndroidShared
-from waydroid_toolkit.core.container import BackendType, IncusBackend, LxcBackend
-from waydroid_toolkit.core.container import set_active as set_active_backend
 from waydroid_toolkit.utils.distro import Distro, detect_distro
 
 console = Console()
