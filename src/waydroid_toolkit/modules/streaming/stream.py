@@ -30,7 +30,7 @@ from pathlib import Path
 _DEFAULT_ADB_PORT = 5555
 _DEFAULT_SCRCPY_BITRATE = "8M"
 _DEFAULT_SCRCPY_MAX_FPS = 60
-_WAYDROID_BRIDGE_IP = "192.168.240.112"  # default waydroid0 bridge address
+WAYDROID_BRIDGE_IP = "192.168.240.112"  # default waydroid0 bridge address
 
 
 @dataclass
@@ -41,7 +41,7 @@ class StreamConfig:
     """
 
     # ADB target — host:port of the Waydroid ADB bridge
-    adb_host: str = _WAYDROID_BRIDGE_IP
+    adb_host: str = WAYDROID_BRIDGE_IP
     adb_port: int = _DEFAULT_ADB_PORT
 
     # Video settings

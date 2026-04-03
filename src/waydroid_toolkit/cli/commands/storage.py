@@ -19,6 +19,13 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from waydroid_toolkit.modules.storage.nfs import (
+    NfsMount,
+    add_nfs_mount,
+    list_nfs_mounts,
+    remove_nfs_mount,
+)
+
 console = Console()
 
 
@@ -90,8 +97,6 @@ def nfs_add(
       # Local bind mount
       wdt storage nfs add /mnt/gamedata --type disk --path /data/games
     """
-    from waydroid_toolkit.modules.storage.nfs import add_nfs_mount
-
     console.print(f"Attaching [bold]{source}[/bold] → container:[bold]{container_path}[/bold]")
     try:
         mount = add_nfs_mount(
@@ -123,8 +128,6 @@ def nfs_add(
 @click.confirmation_option(prompt="Remove this storage device from the container?")
 def nfs_remove(device_name: str) -> None:
     """Remove a disk device DEVICE_NAME from the Waydroid container."""
-    from waydroid_toolkit.modules.storage.nfs import remove_nfs_mount
-
     try:
         remove_nfs_mount(device_name)
     except subprocess.CalledProcessError as exc:
@@ -137,8 +140,6 @@ def nfs_remove(device_name: str) -> None:
 @storage_nfs.command("list")
 def nfs_list() -> None:
     """List all disk devices attached to the Waydroid container."""
-    from waydroid_toolkit.modules.storage.nfs import list_nfs_mounts
-
     mounts = list_nfs_mounts()
     if not mounts:
         console.print("[yellow]No disk devices attached.[/yellow]")

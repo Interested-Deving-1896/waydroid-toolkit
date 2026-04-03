@@ -14,10 +14,21 @@ Sub-commands
 
 from __future__ import annotations
 
+import os
+import signal
 from pathlib import Path
 
 import click
 from rich.console import Console
+
+from waydroid_toolkit.modules.streaming.stream import (
+    WAYDROID_BRIDGE_IP,
+    StreamConfig,
+    check_dependencies,
+    load_pid,
+    save_pid,
+    start_stream,
+)
 
 console = Console()
 
@@ -67,12 +78,8 @@ def stream_start(
       wdt stream start --record waydroid-session.mp4
       wdt stream start --fullscreen --no-audio
     """
-    from waydroid_toolkit.modules.streaming.stream import StreamConfig, start_stream, save_pid
-
     # Check if already running
     if _PID_FILE.exists():
-        from waydroid_toolkit.modules.streaming.stream import load_pid
-        import os
         pid = load_pid(_PID_FILE)
         if pid:
             try:
@@ -83,9 +90,8 @@ def stream_start(
             except ProcessLookupError:
                 _PID_FILE.unlink(missing_ok=True)
 
-    from waydroid_toolkit.modules.streaming.stream import _WAYDROID_BRIDGE_IP
     config = StreamConfig(
-        adb_host=host or _WAYDROID_BRIDGE_IP,
+        adb_host=host or WAYDROID_BRIDGE_IP,
         adb_port=port,
         bitrate=bitrate,
         max_fps=max_fps,
@@ -124,10 +130,6 @@ def stream_start(
 @cmd.command("stop")
 def stream_stop() -> None:
     """Stop the running scrcpy stream session."""
-    from waydroid_toolkit.modules.streaming.stream import load_pid
-    import os
-    import signal
-
     pid = load_pid(_PID_FILE)
     if not pid:
         console.print("[yellow]No stream session found.[/yellow]")
@@ -145,9 +147,6 @@ def stream_stop() -> None:
 @cmd.command("status")
 def stream_status() -> None:
     """Show whether a scrcpy stream session is active."""
-    from waydroid_toolkit.modules.streaming.stream import load_pid
-    import os
-
     pid = load_pid(_PID_FILE)
     if not pid:
         console.print("[yellow]No stream session.[/yellow]")
@@ -164,8 +163,6 @@ def stream_status() -> None:
 @cmd.command("check")
 def stream_check() -> None:
     """Check that streaming dependencies (adb, scrcpy) are installed."""
-    from waydroid_toolkit.modules.streaming.stream import check_dependencies
-
     deps = check_dependencies()
     all_ok = True
 

@@ -8,6 +8,18 @@ For a browser-accessible WebRTC stream, an optional scrcpy-web bridge is
 supported when scrcpy-web / ws-scrcpy is installed.
 """
 
-from .stream import StreamConfig, StreamSession, start_stream, stop_stream
+from .stream import (
+    WAYDROID_BRIDGE_IP,
+    StreamConfig,
+    StreamSession,
+    start_stream,
+    stop_stream,
+)
 
-__all__ = ["StreamConfig", "StreamSession", "start_stream", "stop_stream"]
+__all__ = [
+    "WAYDROID_BRIDGE_IP",
+    "StreamConfig",
+    "StreamSession",
+    "start_stream",
+    "stop_stream",
+]
