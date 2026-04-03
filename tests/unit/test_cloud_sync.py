@@ -47,7 +47,6 @@ class TestCloudSyncPush:
         (tmp_path / "mybox.tar.gz").write_bytes(b"x")
         (tmp_path / "otherbox.tar.gz").write_bytes(b"x")
         runner = CliRunner()
-        calls = []
         with patch("waydroid_toolkit.cli.commands.cloud_sync.shutil.which", return_value="/usr/bin/rclone"):
             with patch("waydroid_toolkit.cli.commands.cloud_sync.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0, stdout="wdt-backups:\n")

@@ -100,6 +100,54 @@ class TestMonitorTop:
         assert "running" in result.output
 
 
+class TestMonitorUptime:
+    def test_uptime_shows_created(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+        incus_output = (
+            "Status: Running\n"
+            "Created: 2024-01-01 00:00:00 UTC\n"
+            "Last Used: 2024-06-01 12:00:00 UTC\n"
+        )
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0, stdout=incus_output)
+                result = runner.invoke(monitor_cmd, ["uptime"])
+        assert result.exit_code == 0
+        assert "2024-01-01" in result.output
+        assert "2024-06-01" in result.output
+
+    def test_uptime_handles_incus_not_found(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run",
+                       side_effect=FileNotFoundError):
+                result = runner.invoke(monitor_cmd, ["uptime"])
+        assert result.exit_code == 0
+        assert "not found" in result.output
+
+
+class TestMonitorHealth:
+    def test_health_runs_successfully(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+
+        def fake_run(cmd, **kw):
+            m = MagicMock(returncode=0, stdout="")
+            if "df" in cmd:
+                m.stdout = "Filesystem Size Used Avail Use% Mounted\n/ 100G 40G 60G 40% /\n"
+            elif "free" in cmd:
+                m.stdout = "Mem: 16G 8G 8G\n"
+            return m
+
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run", side_effect=fake_run):
+                result = runner.invoke(monitor_cmd, ["health"])
+        assert result.exit_code == 0
+        assert "Health check complete" in result.output
+
+
 class TestMonitorDisk:
     def test_disk_shows_allocated_and_usage(self) -> None:
         runner = CliRunner()

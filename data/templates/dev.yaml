@@ -1,0 +1,7 @@
+# wdt template: dev
+# Development Waydroid container with balanced resources.
+description: "Development Waydroid container with balanced CPU and memory"
+
+resources:
+  cpu: 4
+  memory: 4GiB

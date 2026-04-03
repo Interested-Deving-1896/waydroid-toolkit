@@ -32,14 +32,19 @@ from .commands import (
     dbus,
     doctor,
     extensions,
+    gpu,
     images,
     install,
     maintenance,
     monitor,
+    net,
     packages,
     performance,
     snapshot,
     status,
+    template,
+    update,
+    usb,
 )
 
 console = Console()
@@ -87,4 +92,9 @@ cli.add_command(maintenance.cmd, name="maintenance")
 cli.add_command(snapshot.cmd, name="snapshot")
 cli.add_command(container.cmd, name="container")
 cli.add_command(cloud_sync.cmd, name="cloud-sync")
+cli.add_command(template.cmd, name="template")
+cli.add_command(update.cmd, name="update")
+cli.add_command(net.cmd, name="net")
+cli.add_command(usb.cmd, name="usb")
+cli.add_command(gpu.cmd, name="gpu")
 cli.add_command(dbus.cmd, name="dbus")
