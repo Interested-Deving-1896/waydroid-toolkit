@@ -38,6 +38,7 @@ from .commands import (
     monitor,
     net,
     packages,
+    usb,
     performance,
     snapshot,
     status,
@@ -93,4 +94,5 @@ cli.add_command(cloud_sync.cmd, name="cloud-sync")
 cli.add_command(template.cmd, name="template")
 cli.add_command(update.cmd, name="update")
 cli.add_command(net.cmd, name="net")
+cli.add_command(usb.cmd, name="usb")
 cli.add_command(dbus.cmd, name="dbus")
