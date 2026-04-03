@@ -152,6 +152,7 @@ def gpu_list() -> None:
 
 @cmd.command("status")
 def gpu_status() -> None:
+
     """Show GPU attachment status and host GPU resources."""
     ct = _container_name()
     console.print(f"[bold]GPU status:[/bold] {ct}")

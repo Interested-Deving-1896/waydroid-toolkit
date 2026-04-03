@@ -186,3 +186,4 @@ def _get_incus_backend():  # type: ignore[return]
         )
         raise SystemExit(1)
     return backend
+

@@ -218,7 +218,7 @@ def config_b2() -> None:
 
 @cloud_config.command("interactive")
 def config_interactive() -> None:
-    """Launch rclone interactive config."""
+    """Launch rclone interactive config (alias: setup)."""
     _require_rclone()
     console.print(f"[dim]Create a remote named: {_remote_name()}[/dim]")
     subprocess.run(["rclone", "config"])
@@ -262,3 +262,4 @@ def cloud_status() -> None:
         console.print("Run: wdt cloud-sync push")
     else:
         console.print("[green]All local backups synced.[/green]")
+

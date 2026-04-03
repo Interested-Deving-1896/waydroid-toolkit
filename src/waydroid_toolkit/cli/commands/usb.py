@@ -152,3 +152,9 @@ def usb_list() -> None:
         table.add_row(dev, vid_r.stdout.strip(), pid_r.stdout.strip())
 
     console.print(table)
+
+
+# Aliases matching incusbox / imt conventions
+cmd.add_command(usb_attach, name="add")
+cmd.add_command(usb_detach, name="remove")
+cmd.add_command(usb_list_host, name="host")
