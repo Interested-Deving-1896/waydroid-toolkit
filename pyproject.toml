@@ -68,6 +68,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
+known-first-party = ["waydroid_toolkit"]
 known-third-party = ["click", "pytest", "rich", "requests", "toml", "tomli_w"]
 
 [tool.mypy]
