@@ -48,7 +48,7 @@ class TestMonitorStatus:
                 result = runner.invoke(monitor_cmd, ["status"])
         assert result.exit_code == 0
         assert "waydroid" in result.output
-        assert "RUNNING" in result.output
+        assert "running" in result.output
 
     def test_shows_stopped_state(self) -> None:
         runner = CliRunner()
@@ -56,7 +56,7 @@ class TestMonitorStatus:
         with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
             result = runner.invoke(monitor_cmd, ["status"])
         assert result.exit_code == 0
-        assert "STOPPED" in result.output
+        assert "stopped" in result.output
 
 
 class TestMonitorStats:
@@ -97,4 +97,4 @@ class TestMonitorTop:
             result = runner.invoke(monitor_cmd, ["top"])
         assert result.exit_code == 0
         assert "waydroid" in result.output
-        assert "RUNNING" in result.output
+        assert "running" in result.output
