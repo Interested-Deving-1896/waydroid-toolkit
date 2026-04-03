@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from waydroid_toolkit.cli.commands.doctor import cmd as doctor_cmd

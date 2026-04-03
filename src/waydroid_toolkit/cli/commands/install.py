@@ -17,7 +17,7 @@ from waydroid_toolkit.modules.installer.installer import (
     setup_repo,
 )
 from waydroid_toolkit.utils.android_shared import AndroidShared
-from waydroid_toolkit.core.container import BackendType
+from waydroid_toolkit.core.container import BackendType, IncusBackend, LxcBackend
 from waydroid_toolkit.core.container import set_active as set_active_backend
 from waydroid_toolkit.utils.distro import Distro, detect_distro
 
@@ -108,8 +108,6 @@ def cmd(
 
 def _activate_backend(backend_name: str) -> None:
     """Persist the chosen backend to the toolkit config."""
-    from waydroid_toolkit.core.container import IncusBackend, LxcBackend
-
     backend_type = BackendType(backend_name)
     backend_map = {BackendType.LXC: LxcBackend, BackendType.INCUS: IncusBackend}
     backend_obj = backend_map[backend_type]()

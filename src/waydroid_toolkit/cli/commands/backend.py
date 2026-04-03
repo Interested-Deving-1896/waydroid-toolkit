@@ -6,17 +6,11 @@ from rich.table import Table
 
 from waydroid_toolkit.core.container import (
     BackendType,
-)
-from waydroid_toolkit.core.container import (
+    IncusBackend,
+    LxcBackend,
     detect as detect_backend,
-)
-from waydroid_toolkit.core.container import (
     get_active as get_active_backend,
-)
-from waydroid_toolkit.core.container import (
     list_available as list_available_backends,
-)
-from waydroid_toolkit.core.container import (
     set_active as set_active_backend,
 )
 
@@ -72,8 +66,6 @@ def backend_detect() -> None:
 def _do_switch(backend_name: str) -> None:
     """Shared implementation for 'switch' and 'set'."""
     backend_type = BackendType(backend_name)
-
-    from waydroid_toolkit.core.container import IncusBackend, LxcBackend
     backend_map = {BackendType.LXC: LxcBackend, BackendType.INCUS: IncusBackend}
     backend = backend_map[backend_type]()
 
@@ -135,8 +127,6 @@ def backend_incus_setup() -> None:
 
     Run this once after switching to the Incus backend.
     """
-    from waydroid_toolkit.core.container import IncusBackend
-
     backend = IncusBackend()
     if not backend.is_available():
         console.print("[red]Incus is not installed (binary not found).[/red]")
@@ -157,8 +147,6 @@ def backend_incus_setup() -> None:
 @cmd.command("list")
 def backend_list() -> None:
     """List all backends and their availability on this system."""
-    from waydroid_toolkit.core.container import IncusBackend, LxcBackend
-
     try:
         active = get_active_backend()
         active_type = active.backend_type

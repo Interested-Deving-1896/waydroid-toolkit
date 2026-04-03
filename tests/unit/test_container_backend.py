@@ -393,17 +393,18 @@ class TestIncusBackend:
 # ── Selector ──────────────────────────────────────────────────────────────────
 
 class TestSelector:
-    def test_detect_prefers_lxc(self) -> None:
-        with patch("waydroid_toolkit.core.container.lxc_backend.shutil.which", return_value="/usr/bin/lxc-start"):
+    def test_detect_prefers_incus(self) -> None:
+        """detect() returns Incus when both backends are available."""
+        with patch("waydroid_toolkit.core.container.incus_backend.shutil.which", return_value="/usr/bin/incus"):
             backend = detect()
-        assert backend.backend_type == BackendType.LXC
-
-    def test_detect_falls_back_to_incus(self) -> None:
-        # Patch is_available on the backend instances that selector.detect() creates
-        with patch.object(LxcBackend, "is_available", return_value=False):
-            with patch.object(IncusBackend, "is_available", return_value=True):
-                backend = detect()
         assert backend.backend_type == BackendType.INCUS
+
+    def test_detect_falls_back_to_lxc(self) -> None:
+        """detect() returns LXC when Incus is not available."""
+        with patch.object(IncusBackend, "is_available", return_value=False):
+            with patch.object(LxcBackend, "is_available", return_value=True):
+                backend = detect()
+        assert backend.backend_type == BackendType.LXC
 
     def test_detect_raises_when_none_available(self) -> None:
         with patch("waydroid_toolkit.core.container.lxc_backend.shutil.which", return_value=None):
@@ -421,11 +422,12 @@ class TestSelector:
         assert backend.backend_type == BackendType.LXC
 
     def test_get_active_falls_back_to_detect_on_empty_config(self, tmp_path: Path) -> None:
+        """With no config, get_active() calls detect() which prefers Incus."""
         config_file = tmp_path / "config.toml"
         with patch("waydroid_toolkit.core.container.selector._CONFIG_PATH", config_file):
-            with patch("waydroid_toolkit.core.container.lxc_backend.shutil.which", return_value="/usr/bin/lxc-start"):
+            with patch("waydroid_toolkit.core.container.incus_backend.shutil.which", return_value="/usr/bin/incus"):
                 backend = get_active()
-        assert backend.backend_type == BackendType.LXC
+        assert backend.backend_type == BackendType.INCUS
 
     def test_get_active_raises_if_configured_backend_unavailable(self, tmp_path: Path) -> None:
         config_file = tmp_path / "config.toml"

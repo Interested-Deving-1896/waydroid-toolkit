@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -51,12 +52,11 @@ def _device_exists(path: str) -> bool:
 
 def _audio_socket() -> tuple[str, str]:
     """Return (backend_name, socket_path) for the detected audio backend."""
-    xdg = Path.home() / ".local" / "share"  # fallback
     runtime = Path(
         subprocess.run(
             ["bash", "-c", "echo $XDG_RUNTIME_DIR"],
             capture_output=True, text=True,
-        ).stdout.strip() or f"/run/user/{subprocess.os.getuid()}"
+        ).stdout.strip() or f"/run/user/{os.getuid()}"
     )
     pw_sock = runtime / "pipewire-0"
     pa_sock = runtime / "pulse" / "native"
@@ -211,7 +211,7 @@ def cmd(as_json: bool) -> None:
                 add(_check("adb connected", True))
             else:
                 add(_warn("adb connected", "Waydroid may not be running"))
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001  # broad catch intentional — adb state is best-effort
             add(_warn("adb connected", "could not determine state"))
 
     # ── Audio ─────────────────────────────────────────────────────────────────
