@@ -215,6 +215,10 @@ def _parse_minimal_yaml(text: str) -> dict[str, Any]:
                 section[key] = nested_map
                 continue
 
+            # Strip inline comments (e.g. "incus  # recommended")
+            if "#" in val:
+                val = val[:val.index("#")].strip()
+
             # Non-empty value
             if nested_key is not None and nested_map is not None and indent > 2:
                 # We're inside a nested mapping (e.g. performance:)
