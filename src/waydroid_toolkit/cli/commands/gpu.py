@@ -13,7 +13,7 @@ console = Console()
 
 def _container_name() -> str:
     try:
-        from waydroid_toolkit.core.container.backend import get_backend
+        from waydroid_toolkit.core.container import get_active as get_backend
         b = get_backend()
         return b.get_info().container_name  # type: ignore[attr-defined]
     except Exception:

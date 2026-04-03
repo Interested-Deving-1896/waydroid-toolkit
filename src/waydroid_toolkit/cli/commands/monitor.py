@@ -218,7 +218,9 @@ def monitor_health() -> None:
         capture_output=True, text=True,
     )
     ct_total = sum(1 for ln in list_r.stdout.splitlines() if "container" in ln)
-    ct_running = sum(1 for ln in list_r.stdout.splitlines() if "RUNNING" in ln and "container" in ln)
+    ct_running = sum(
+        1 for ln in list_r.stdout.splitlines() if "RUNNING" in ln and "container" in ln
+    )
     console.print(f"  Containers    : {ct_running} running / {ct_total} total")
 
     # Host disk

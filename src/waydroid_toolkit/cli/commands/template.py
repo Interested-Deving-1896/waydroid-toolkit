@@ -9,7 +9,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from waydroid_toolkit.core.container.backend import get_backend
+from waydroid_toolkit.core.container import get_active as get_backend
 
 console = Console()
 
