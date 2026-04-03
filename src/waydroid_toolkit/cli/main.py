@@ -23,9 +23,11 @@ from rich.console import Console
 from waydroid_toolkit import __version__
 
 from .commands import (
+    assemble,
     backend,
     backup,
     build,
+    container,
     dbus,
     doctor,
     extensions,
@@ -68,6 +70,7 @@ def cli() -> None:
 
 cli.add_command(status.cmd, name="status")
 cli.add_command(doctor.cmd, name="doctor")
+cli.add_command(assemble.cmd, name="assemble")
 cli.add_command(install.cmd, name="install")
 cli.add_command(build.cmd, name="build")
 cli.add_command(_gui_cmd(), name="gui")
@@ -79,4 +82,5 @@ cli.add_command(backup.cmd, name="backup")
 cli.add_command(performance.cmd, name="performance")
 cli.add_command(maintenance.cmd, name="maintenance")
 cli.add_command(snapshot.cmd, name="snapshot")
+cli.add_command(container.cmd, name="container")
 cli.add_command(dbus.cmd, name="dbus")

@@ -203,6 +203,28 @@ class TestLxcBackend:
         assert info.version == "4.0.12"
         assert info.container_name == "waydroid"
 
+    # ── Write-op gating ───────────────────────────────────────────────────────
+
+    def test_snapshot_create_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_create("snap1")
+
+    def test_snapshot_list_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_list()
+
+    def test_snapshot_restore_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_restore("snap1")
+
+    def test_snapshot_delete_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().snapshot_delete("snap1")
+
+    def test_console_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="Incus backend"):
+            LxcBackend().console()
+
 
 # ── IncusBackend ──────────────────────────────────────────────────────────────
 
@@ -367,6 +389,54 @@ class TestIncusBackend:
         assert info.backend_type == BackendType.INCUS
         assert info.version == "6.1"
         assert info.container_name == "waydroid"
+
+    # ── Snapshots ─────────────────────────────────────────────────────────────
+
+    def test_snapshot_create_calls_incus(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_create("snap1")
+            args = mock_run.call_args[0][0]
+            assert args == ["incus", "snapshot", "create", "waydroid", "snap1"]
+
+    def test_snapshot_list_parses_json(self) -> None:
+        payload = json.dumps({"snapshots": [{"name": "snap1"}, {"name": "snap2"}]})
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout=payload)
+            names = IncusBackend().snapshot_list()
+        assert names == ["snap1", "snap2"]
+
+    def test_snapshot_list_empty_when_no_snapshots(self) -> None:
+        payload = json.dumps({"snapshots": []})
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout=payload)
+            assert IncusBackend().snapshot_list() == []
+
+    def test_snapshot_list_empty_on_error(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stdout="")
+            assert IncusBackend().snapshot_list() == []
+
+    def test_snapshot_restore_calls_incus(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_restore("snap1")
+            args = mock_run.call_args[0][0]
+            assert args == ["incus", "snapshot", "restore", "waydroid", "snap1"]
+
+    def test_snapshot_delete_calls_incus(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            IncusBackend().snapshot_delete("snap1")
+            args = mock_run.call_args[0][0]
+            assert args == ["incus", "snapshot", "delete", "waydroid", "snap1"]
+
+    def test_console_calls_execvp(self) -> None:
+        with patch("waydroid_toolkit.core.container.incus_backend.os.execvp") as mock_exec:
+            IncusBackend().console()
+            mock_exec.assert_called_once_with(
+                "incus", ["incus", "console", "waydroid"]
+            )
 
     def test_setup_from_lxc_raises_without_config(self, tmp_path: Path) -> None:
         with patch("waydroid_toolkit.core.container.incus_backend._LXC_CONFIG_PATH", tmp_path / "nonexistent"):

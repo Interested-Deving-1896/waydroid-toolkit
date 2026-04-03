@@ -107,3 +107,32 @@ class ContainerBackend(ABC):
     ) -> subprocess.CompletedProcess[str]:
         """Run cmd inside the container, returning the completed process."""
         ...
+
+    # ── Snapshots ─────────────────────────────────────────────────────────────
+
+    @abstractmethod
+    def snapshot_create(self, name: str) -> None:
+        """Create a named snapshot of the container."""
+        ...
+
+    @abstractmethod
+    def snapshot_list(self) -> list[str]:
+        """Return snapshot names for the container."""
+        ...
+
+    @abstractmethod
+    def snapshot_restore(self, name: str) -> None:
+        """Restore the container to a named snapshot."""
+        ...
+
+    @abstractmethod
+    def snapshot_delete(self, name: str) -> None:
+        """Delete a named snapshot."""
+        ...
+
+    # ── Console ───────────────────────────────────────────────────────────────
+
+    @abstractmethod
+    def console(self) -> None:
+        """Attach to the container console interactively (replaces the process)."""
+        ...

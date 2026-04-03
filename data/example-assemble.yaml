@@ -1,0 +1,22 @@
+# wdt assemble — example configuration file
+#
+# Usage:
+#   wdt assemble --file data/example-assemble.yaml
+#   wdt assemble --file data/example-assemble.yaml --dry-run
+#
+# All fields are optional; defaults are used when omitted.
+# Run 'wdt assemble --help' for the full schema.
+
+waydroid:
+  backend: incus          # incus (recommended) or lxc
+  image_type: VANILLA     # VANILLA or GAPPS
+  arch: x86_64            # x86_64 or arm64
+
+  extensions:
+    - gapps
+    - widevine
+
+  performance:
+    zram_size: 4096       # MB
+    zram_algo: lz4        # lz4 | zstd | lzo
+    governor: performance # performance | schedutil | powersave
