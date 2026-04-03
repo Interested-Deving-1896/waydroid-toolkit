@@ -67,6 +67,9 @@ ignore = [
     "E402",   # module-level import not at top — unavoidable in Qt compat shim
 ]
 
+[tool.ruff.lint.isort]
+known-third-party = ["click", "pytest", "rich", "requests", "toml", "tomli_w"]
+
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
