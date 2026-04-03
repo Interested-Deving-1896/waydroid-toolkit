@@ -17,6 +17,7 @@ Commands:
     publish       Create and manage Incus images from the Waydroid container
     shell         Open an interactive shell inside the Waydroid container
     config        Manage wdt configuration
+    disk          Live disk resize for the Waydroid container
     profiles      Manage Waydroid image profiles
     upgrade       Upgrade the Waydroid Android image via OTA
     performance   Apply/remove host performance tuning
@@ -42,6 +43,7 @@ from .commands import (
     container,
     dbus,
     demo,
+    disk,
     doctor,
     extensions,
     fleet,
@@ -111,6 +113,7 @@ cli.add_command(fleet.cmd, name="fleet")
 cli.add_command(publish.cmd, name="publish")
 cli.add_command(shell.cmd, name="shell")
 cli.add_command(config.cmd, name="config")
+cli.add_command(disk.cmd, name="disk")
 cli.add_command(profiles.cmd, name="profiles")
 cli.add_command(upgrade.cmd, name="upgrade")
 cli.add_command(performance.cmd, name="performance")
