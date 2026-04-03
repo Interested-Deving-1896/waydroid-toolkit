@@ -17,6 +17,9 @@ Commands:
     publish       Create and manage Incus images from the Waydroid container
     shell         Open an interactive shell inside the Waydroid container
     config        Manage wdt configuration
+    setup-rootless  Configure the system for rootless Waydroid operation
+    tui             Launch interactive terminal UI (requires dialog or whiptail)
+    dashboard       Serve a web monitoring dashboard for Waydroid containers
     disk          Live disk resize for the Waydroid container
     profiles      Manage Waydroid image profiles
     upgrade       Upgrade the Waydroid Android image via OTA
@@ -41,6 +44,7 @@ from .commands import (
     cloud_sync,
     config,
     container,
+    dashboard,
     dbus,
     demo,
     disk,
@@ -57,12 +61,14 @@ from .commands import (
     performance,
     profiles,
     publish,
+    setup_rootless,
     shell,
     snapshot,
     status,
     storage,
     stream,
     template,
+    tui,
     update,
     upgrade,
     usb,
@@ -113,6 +119,9 @@ cli.add_command(fleet.cmd, name="fleet")
 cli.add_command(publish.cmd, name="publish")
 cli.add_command(shell.cmd, name="shell")
 cli.add_command(config.cmd, name="config")
+cli.add_command(setup_rootless.cmd, name="setup-rootless")
+cli.add_command(tui.cmd, name="tui")
+cli.add_command(dashboard.cmd, name="dashboard")
 cli.add_command(disk.cmd, name="disk")
 cli.add_command(profiles.cmd, name="profiles")
 cli.add_command(upgrade.cmd, name="upgrade")
