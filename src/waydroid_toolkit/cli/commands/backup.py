@@ -46,6 +46,27 @@ def backup_list(backup_dir: str | None) -> None:
         console.print(f"  [bold]{i}.[/bold] {a.name}  ({size_mb:.1f} MB)")
 
 
+@cmd.command("delete")
+@click.argument("name")
+@click.confirmation_option(prompt="Delete this backup?")
+def backup_delete(name: str) -> None:
+    """Delete a local backup archive by NAME."""
+    backup_dir = DEFAULT_BACKUP_DIR
+    # Accept bare name or full path
+    candidate = Path(name)
+    if not candidate.is_absolute():
+        candidate = backup_dir / name
+    # Try with and without .tar.gz suffix
+    for path in (candidate, Path(str(candidate) + ".tar.gz")):
+        if path.exists():
+            path.unlink()
+            console.print(f"[green]Deleted:[/green] {path}")
+            return
+    console.print(f"[red]Backup not found:[/red] {name}")
+    console.print("List backups with: wdt backup list")
+    raise SystemExit(1)
+
+
 @cmd.command("restore")
 @click.argument("archive")
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt.")
