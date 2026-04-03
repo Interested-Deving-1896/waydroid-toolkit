@@ -20,7 +20,6 @@ from rich.console import Console
 from rich.table import Table
 
 from waydroid_toolkit.modules.storage.nfs import (
-    NfsMount,
     add_nfs_mount,
     list_nfs_mounts,
     remove_nfs_mount,
