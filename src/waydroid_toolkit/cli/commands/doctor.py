@@ -53,10 +53,7 @@ def _device_exists(path: str) -> bool:
 def _audio_socket() -> tuple[str, str]:
     """Return (backend_name, socket_path) for the detected audio backend."""
     runtime = Path(
-        subprocess.run(
-            ["bash", "-c", "echo $XDG_RUNTIME_DIR"],
-            capture_output=True, text=True,
-        ).stdout.strip() or f"/run/user/{os.getuid()}"
+        os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
     )
     pw_sock = runtime / "pipewire-0"
     pa_sock = runtime / "pulse" / "native"
