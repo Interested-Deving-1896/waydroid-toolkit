@@ -36,6 +36,7 @@ from .commands import (
     install,
     maintenance,
     monitor,
+    net,
     packages,
     performance,
     snapshot,
@@ -91,4 +92,5 @@ cli.add_command(container.cmd, name="container")
 cli.add_command(cloud_sync.cmd, name="cloud-sync")
 cli.add_command(template.cmd, name="template")
 cli.add_command(update.cmd, name="update")
+cli.add_command(net.cmd, name="net")
 cli.add_command(dbus.cmd, name="dbus")
