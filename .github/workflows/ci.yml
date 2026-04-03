@@ -204,6 +204,18 @@ jobs:
       - name: wdt stream check (no scrcpy — must not crash)
         run: wdt stream check || true
 
+      - name: wdt demo --help
+        run: wdt demo --help
+
+      - name: wdt demo status (not running — must not crash)
+        run: wdt demo status
+
+      - name: wdt winesapos --help
+        run: wdt winesapos --help
+
+      - name: wdt winesapos versions (network — must not crash)
+        run: wdt winesapos versions || true
+
   # ── Docs build ─────────────────────────────────────────────────────────────
   docs:
     name: Build docs (MkDocs)

@@ -17,6 +17,8 @@ Commands:
     maintenance   Display settings, screenshots, logcat, file transfer, debloat
     storage       Manage shared storage (NFS/EFS/disk) for the container
     stream        Mirror the Waydroid display via scrcpy
+    demo          Manage a local incus-demo-server instance
+    winesapos     Fetch, import, and launch winesapOS gaming VMs
 """
 
 import click
@@ -32,6 +34,7 @@ from .commands import (
     cloud_sync,
     container,
     dbus,
+    demo,
     doctor,
     extensions,
     gpu,
@@ -49,6 +52,7 @@ from .commands import (
     template,
     update,
     usb,
+    winesapos,
 )
 
 console = Console()
@@ -104,3 +108,5 @@ cli.add_command(gpu.cmd, name="gpu")
 cli.add_command(dbus.cmd, name="dbus")
 cli.add_command(storage.cmd, name="storage")
 cli.add_command(stream.cmd, name="stream")
+cli.add_command(demo.cmd, name="demo")
+cli.add_command(winesapos.cmd, name="winesapos")
