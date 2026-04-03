@@ -70,6 +70,57 @@ def monitor_stats() -> None:
     _print_stats(info.container_name)
 
 
+@cmd.command("disk")
+def monitor_disk() -> None:
+    """Disk usage and allocation for the Waydroid container."""
+    b = _backend()
+    info = b.get_info()  # type: ignore[attr-defined]
+    container_name = info.container_name
+
+    # Allocated root disk size from incus config
+    try:
+        alloc_result = subprocess.run(
+            ["incus", "config", "device", "get", container_name, "root", "size"],
+            capture_output=True, text=True, timeout=5,
+        )
+        allocated = alloc_result.stdout.strip() or "pool default"
+    except FileNotFoundError:
+        allocated = "incus not found"
+
+    console.print(f"[bold]Disk:[/bold] {container_name}")
+    console.print(f"  Allocated : {allocated}")
+    console.print()
+
+    # Live disk usage from incus info --format json
+    try:
+        result = subprocess.run(
+            ["incus", "info", container_name, "--format", "json"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except FileNotFoundError:
+        console.print("[yellow]incus not found — disk usage unavailable[/yellow]")
+        return
+
+    if result.returncode != 0:
+        console.print("[yellow]Could not retrieve disk info from incus[/yellow]")
+        return
+
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        console.print("[yellow]Could not parse incus info output[/yellow]")
+        return
+
+    disk = (data.get("state") or {}).get("disk", {})
+    if disk:
+        console.print("  [bold]Usage[/bold]")
+        for dev, ddata in disk.items():
+            usage_mb = ddata.get("usage", 0) / (1024 * 1024)
+            console.print(f"    {dev}: {usage_mb:.1f} MiB used")
+    else:
+        console.print("  [yellow]Disk usage not available (container may be stopped)[/yellow]")
+
+
 @cmd.command("top")
 def monitor_top() -> None:
     """Overview of the Waydroid container (single-instance summary)."""

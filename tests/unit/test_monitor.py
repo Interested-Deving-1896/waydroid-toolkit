@@ -98,3 +98,53 @@ class TestMonitorTop:
         assert result.exit_code == 0
         assert "waydroid" in result.output
         assert "running" in result.output
+
+
+class TestMonitorDisk:
+    def test_disk_shows_allocated_and_usage(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+
+        def fake_run(cmd, **kw):
+            m = MagicMock(returncode=0)
+            if "device" in cmd and "get" in cmd:
+                m.stdout = "20GiB\n"
+            else:
+                m.stdout = _incus_info_json()
+            return m
+
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run", side_effect=fake_run):
+                result = runner.invoke(monitor_cmd, ["disk"])
+        assert result.exit_code == 0
+        assert "20GiB" in result.output
+        assert "root" in result.output
+        assert "MiB" in result.output
+
+    def test_disk_shows_pool_default_when_no_size(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+
+        def fake_run(cmd, **kw):
+            m = MagicMock(returncode=0)
+            if "device" in cmd and "get" in cmd:
+                m.stdout = ""
+            else:
+                m.stdout = _incus_info_json()
+            return m
+
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run", side_effect=fake_run):
+                result = runner.invoke(monitor_cmd, ["disk"])
+        assert result.exit_code == 0
+        assert "pool default" in result.output
+
+    def test_disk_handles_incus_not_found(self) -> None:
+        runner = CliRunner()
+        mock_b = _make_backend(ContainerState.RUNNING)
+        with patch("waydroid_toolkit.cli.commands.monitor.get_backend", return_value=mock_b):
+            with patch("waydroid_toolkit.cli.commands.monitor.subprocess.run",
+                       side_effect=FileNotFoundError):
+                result = runner.invoke(monitor_cmd, ["disk"])
+        assert result.exit_code == 0
+        assert "not found" in result.output
