@@ -69,13 +69,23 @@ def usb_list_host() -> None:
 
 @cmd.command("attach")
 @click.argument("vendor_id")
-@click.argument("product_id")
+@click.argument("product_id", required=False, default=None)
 @click.option("--dev-name", default="", help="Device name (default: usb-<VID>-<PID>).")
-def usb_attach(vendor_id: str, product_id: str, dev_name: str) -> None:
+def usb_attach(vendor_id: str, product_id: str | None, dev_name: str) -> None:
     """Attach a USB device to the container by vendor and product ID.
 
-    VENDOR_ID and PRODUCT_ID are 4-digit hex values (e.g. 046d c52b).
+    Accepts either two separate arguments (VENDOR_ID PRODUCT_ID) or a single
+    VID:PID string (e.g. 046d:c52b).
     """
+    # Support VID:PID shorthand as a single argument
+    if product_id is None:
+        if ":" in vendor_id:
+            vendor_id, product_id = vendor_id.split(":", 1)
+        else:
+            raise click.UsageError(
+                "Provide VENDOR_ID PRODUCT_ID or a single VID:PID string (e.g. 046d:c52b)."
+            )
+
     ct = _container_name()
     pname = dev_name or f"usb-{vendor_id}-{product_id}"
 

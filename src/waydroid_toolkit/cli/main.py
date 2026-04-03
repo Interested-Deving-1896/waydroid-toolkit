@@ -20,6 +20,7 @@ Commands:
     setup-rootless  Configure the system for rootless Waydroid operation
     tui             Launch interactive terminal UI (requires dialog or whiptail)
     dashboard       Serve a web monitoring dashboard for Waydroid containers
+    host-exec       Run a host command from inside the Waydroid container
     disk          Live disk resize for the Waydroid container
     profiles      Manage Waydroid image profiles
     upgrade       Upgrade the Waydroid Android image via OTA
@@ -52,6 +53,7 @@ from .commands import (
     extensions,
     fleet,
     gpu,
+    host_exec,
     images,
     install,
     maintenance,
@@ -122,6 +124,7 @@ cli.add_command(config.cmd, name="config")
 cli.add_command(setup_rootless.cmd, name="setup-rootless")
 cli.add_command(tui.cmd, name="tui")
 cli.add_command(dashboard.cmd, name="dashboard")
+cli.add_command(host_exec.cmd, name="host-exec")
 cli.add_command(disk.cmd, name="disk")
 cli.add_command(profiles.cmd, name="profiles")
 cli.add_command(upgrade.cmd, name="upgrade")

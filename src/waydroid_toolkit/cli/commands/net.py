@@ -122,6 +122,86 @@ def net_list() -> None:
     console.print(table)
 
 
+@cmd.group("nic")
+def net_nic() -> None:
+    """Manage network interfaces (NICs) on the Waydroid container."""
+
+
+@net_nic.command("add")
+@click.argument("nic_name")
+@click.option("--network", default="incusbr0", show_default=True,
+              help="Incus network bridge to attach to.")
+@click.option("--type", "nic_type", default="bridged",
+              type=click.Choice(["bridged", "macvlan", "ipvlan", "p2p", "routed"]),
+              show_default=True, help="NIC device type.")
+def nic_add(nic_name: str, network: str, nic_type: str) -> None:
+    """Add a network interface to the Waydroid container.
+
+    NIC_NAME is the device name inside Incus (e.g. eth1).
+    """
+    ct = _container_name()
+    console.print(f"Adding NIC [bold]{nic_name}[/bold] ({nic_type}, network={network}) to '{ct}' ..."  # noqa: E501
+                  )
+    result = subprocess.run([
+        "incus", "config", "device", "add", ct, nic_name, "nic",
+        f"nictype={nic_type}",
+        f"parent={network}",
+        f"name={nic_name}",
+    ])
+    if result.returncode != 0:
+        console.print(f"[red]Failed to add NIC '{nic_name}'.[/red]")
+        raise SystemExit(1)
+    console.print(f"[green]NIC added:[/green] {nic_name} → {network}")
+
+
+@net_nic.command("remove")
+@click.argument("nic_name")
+def nic_remove(nic_name: str) -> None:
+    """Remove a network interface from the Waydroid container."""
+    ct = _container_name()
+    result = subprocess.run(["incus", "config", "device", "remove", ct, nic_name])
+    if result.returncode != 0:
+        console.print(f"[red]Failed to remove NIC '{nic_name}'.[/red]")
+        raise SystemExit(1)
+    console.print(f"[green]NIC removed:[/green] {nic_name}")
+
+
+@net_nic.command("list")
+def nic_list() -> None:
+    """List network interface devices on the Waydroid container."""
+    ct = _container_name()
+    list_r = subprocess.run(
+        ["incus", "config", "device", "list", ct],
+        capture_output=True, text=True,
+    )
+    if list_r.returncode != 0:
+        console.print("[yellow]Could not list devices.[/yellow]")
+        return
+    nic_devices = [
+        line.split()[0] for line in list_r.stdout.splitlines()
+        if "nic" in line
+    ]
+    if not nic_devices:
+        console.print("[yellow]No NIC devices configured.[/yellow]")
+        return
+    from rich.table import Table as _Table
+    table = _Table(show_header=True, header_style="bold")
+    table.add_column("DEVICE", style="cyan")
+    table.add_column("TYPE")
+    table.add_column("NETWORK")
+    for dev in nic_devices:
+        t_r = subprocess.run(
+            ["incus", "config", "device", "get", ct, dev, "nictype"],
+            capture_output=True, text=True,
+        )
+        n_r = subprocess.run(
+            ["incus", "config", "device", "get", ct, dev, "parent"],
+            capture_output=True, text=True,
+        )
+        table.add_row(dev, t_r.stdout.strip() or "?", n_r.stdout.strip() or "?")
+    console.print(table)
+
+
 @cmd.command("status")
 def net_status() -> None:
     """Show network interfaces and port forwards for the container."""

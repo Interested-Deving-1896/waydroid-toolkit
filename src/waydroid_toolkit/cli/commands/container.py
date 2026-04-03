@@ -27,7 +27,87 @@ def _backend() -> object:
 
 @click.group("container")
 def cmd() -> None:
-    """Manage the Waydroid container (snapshot, console)."""
+    """Manage the Waydroid container (start, stop, list, snapshot, console)."""
+
+
+# ── start / stop / list ───────────────────────────────────────────────────────
+
+@cmd.command("start")
+def container_start() -> None:
+    """Start the Waydroid container."""
+    import subprocess
+    b = _backend()
+    ct = b.get_info().container_name  # type: ignore[attr-defined]
+    console.print(f"Starting container [bold]{ct}[/bold] ...")
+    r = subprocess.run(["incus", "start", ct])
+    if r.returncode != 0:
+        console.print(f"[red]Failed to start '{ct}'.[/red]")
+        raise SystemExit(1)
+    console.print(f"[green]Started:[/green] {ct}")
+
+
+@cmd.command("stop")
+@click.option("--force", is_flag=True, help="Force-stop (incus stop --force).")
+def container_stop(force: bool) -> None:
+    """Stop the Waydroid container."""
+    import subprocess
+    b = _backend()
+    ct = b.get_info().container_name  # type: ignore[attr-defined]
+    console.print(f"Stopping container [bold]{ct}[/bold] ...")
+    cmd_args = ["incus", "stop", ct]
+    if force:
+        cmd_args.append("--force")
+    r = subprocess.run(cmd_args)
+    if r.returncode != 0:
+        console.print(f"[red]Failed to stop '{ct}'.[/red]")
+        raise SystemExit(1)
+    console.print(f"[green]Stopped:[/green] {ct}")
+
+
+@cmd.command("list")
+def container_list() -> None:
+    """List Waydroid containers managed by the active backend."""
+    import json
+    import subprocess
+
+    from rich.table import Table
+
+    r = subprocess.run(
+        ["incus", "list", "--format", "json"],
+        capture_output=True, text=True,
+    )
+    if r.returncode != 0:
+        console.print("[yellow]Could not query Incus.[/yellow]")
+        raise SystemExit(1)
+
+    try:
+        instances = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        instances = []
+
+    containers = [i for i in instances if i.get("type") == "container"]
+    if not containers:
+        console.print("[yellow]No containers found.[/yellow]")
+        return
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("NAME", style="cyan")
+    table.add_column("STATUS")
+    table.add_column("IPV4")
+    for inst in containers:
+        name = inst.get("name", "")
+        status = inst.get("status", "unknown")
+        status_str = f"[green]{status}[/green]" if status == "Running" else status
+        ip = "-"
+        for iface in inst.get("state", {}).get("network", {}).values():
+            for addr in iface.get("addresses", []):
+                if addr.get("family") == "inet" and not addr["address"].startswith("127."):
+                    ip = addr["address"]
+                    break
+            if ip != "-":
+                break
+        table.add_row(name, status_str, ip)
+    console.print(table)
 
 
 # ── snapshot ──────────────────────────────────────────────────────────────────
