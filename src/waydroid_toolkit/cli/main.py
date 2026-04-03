@@ -36,6 +36,7 @@ from .commands import (
     install,
     maintenance,
     monitor,
+    gpu,
     net,
     packages,
     usb,
@@ -95,4 +96,5 @@ cli.add_command(template.cmd, name="template")
 cli.add_command(update.cmd, name="update")
 cli.add_command(net.cmd, name="net")
 cli.add_command(usb.cmd, name="usb")
+cli.add_command(gpu.cmd, name="gpu")
 cli.add_command(dbus.cmd, name="dbus")
