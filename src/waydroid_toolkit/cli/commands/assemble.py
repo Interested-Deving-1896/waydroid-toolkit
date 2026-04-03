@@ -161,11 +161,16 @@ def _parse_minimal_yaml(text: str) -> dict[str, Any]:
     Handles:
       - Top-level 'waydroid:' section
       - Scalar key: value pairs (string, int)
-      - Sequence items under 'extensions:'
+      - Sequence items under 'extensions:' (lines starting with '- ')
+      - Nested mapping under 'performance:' (key: value pairs at deeper indent)
     """
     result: dict[str, Any] = {}
     section: dict[str, Any] | None = None
+    # list_key: the key whose value is a sequence (e.g. 'extensions')
     list_key: str | None = None
+    # nested_key: the key whose value is a mapping (e.g. 'performance')
+    nested_key: str | None = None
+    nested_map: dict[str, Any] | None = None
 
     for raw_line in text.splitlines():
         line = raw_line.rstrip()
@@ -176,40 +181,70 @@ def _parse_minimal_yaml(text: str) -> dict[str, Any]:
 
         indent = len(line) - len(stripped)
 
-        # Top-level section header
-        if indent == 0 and stripped.endswith(":"):
+        # Top-level section header (indent 0, ends with ':', no value)
+        if indent == 0 and stripped.endswith(":") and ":" not in stripped[:-1]:
             key = stripped[:-1]
             section = {}
             result[key] = section
             list_key = None
+            nested_key = None
+            nested_map = None
             continue
 
         if section is None:
             continue
 
-        # Sequence item under a list key
-        if stripped.startswith("- ") and list_key is not None:
+        # Sequence item under list_key (e.g. '  - gapps')
+        if stripped.startswith("- ") and list_key is not None and nested_key is None:
             val = stripped[2:].strip()
             section[list_key].append(val)  # type: ignore[union-attr]
             continue
 
-        # Key: value pair inside section
+        # Key: value pair — could be inside a nested mapping or directly in section
         if ":" in stripped:
             key, _, val = stripped.partition(":")
             key = key.strip()
             val = val.strip()
+
             if val == "":
-                # Start of a nested mapping or list — peek at next non-empty line
-                # handled by list_key tracking below
-                list_key = key
-                section[key] = []
+                # Empty value — determine if this starts a list or a nested map.
+                # We defer the decision: initialise as None and resolve on first child.
+                list_key = None
+                nested_key = key
+                nested_map = {}
+                section[key] = nested_map
                 continue
+
+            # Non-empty value
+            if nested_key is not None and nested_map is not None and indent > 2:
+                # We're inside a nested mapping (e.g. performance:)
+                try:
+                    nested_map[key] = int(val)
+                except ValueError:
+                    nested_map[key] = val
+                continue
+
+            # Direct key: value in section — reset nested/list state
             list_key = None
-            # Coerce integers
+            nested_key = None
+            nested_map = None
             try:
                 section[key] = int(val)
             except ValueError:
                 section[key] = val
+            continue
+
+        # Sequence item with no active list_key — start a new list
+        if stripped.startswith("- "):
+            # The previous key with empty value should become a list
+            if nested_key is not None and nested_map is not None and not nested_map:
+                # Convert the empty dict back to a list
+                list_key = nested_key
+                section[list_key] = []
+                nested_key = None
+                nested_map = None
+                val = stripped[2:].strip()
+                section[list_key].append(val)
 
     return result
 
@@ -239,7 +274,6 @@ def _apply_extensions(extension_ids: list[str]) -> None:
             ExtensionState,
             get,
             install_with_deps,
-            resolve,
         )
     except ImportError as exc:
         console.print(f"[yellow]Extensions module unavailable: {exc}[/yellow]")
@@ -247,7 +281,7 @@ def _apply_extensions(extension_ids: list[str]) -> None:
 
     for ext_id in extension_ids:
         try:
-            ext = get(ext_id, REGISTRY)
+            ext = get(ext_id)
         except KeyError:
             console.print(f"  [yellow]![/yellow] Unknown extension: {ext_id}")
             continue
@@ -257,9 +291,9 @@ def _apply_extensions(extension_ids: list[str]) -> None:
             continue
 
         try:
-            order = resolve([ext_id], REGISTRY)
             install_with_deps(
-                order,
+                [ext_id],
+                REGISTRY,
                 progress=lambda msg: console.print(f"    [cyan]→[/cyan] {msg}"),
             )
             console.print(f"  [green]✓[/green] Extension installed: {ext_id}")
