@@ -9,7 +9,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from waydroid_toolkit.cli.commands.assemble import _parse_minimal_yaml, cmd as assemble_cmd
+from waydroid_toolkit.cli.commands.assemble import (
+    _parse_minimal_yaml,
+    cmd as assemble_cmd,
+)
 
 
 # ── YAML parser ───────────────────────────────────────────────────────────────

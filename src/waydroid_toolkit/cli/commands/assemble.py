@@ -216,7 +216,10 @@ def _parse_minimal_yaml(text: str) -> dict[str, Any]:
 
 def _apply_backend(backend_name: str) -> None:
     backend_type = BackendType(backend_name)
-    backend_map: dict[BackendType, type] = {BackendType.LXC: LxcBackend, BackendType.INCUS: IncusBackend}
+    backend_map: dict[BackendType, type] = {
+        BackendType.LXC: LxcBackend,
+        BackendType.INCUS: IncusBackend,
+    }
     backend_obj = backend_map[backend_type]()
 
     if not backend_obj.is_available():
