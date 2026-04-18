@@ -1,0 +1,45 @@
+# Converted from GitHub Actions — waydroid-toolkit
+# Mirrors: ci.yml, integration.yml
+
+stages:
+  - lint
+  - test
+
+default:
+  image: ubuntu:22.04
+
+# ── Lint ──────────────────────────────────────────────────────────────────────
+shellcheck:
+  stage: lint
+  before_script:
+    - apt-get update -qq && apt-get install -y shellcheck
+  script:
+    - |
+      failed=0
+      for f in $(find . -name "*.sh" ! -path "./.git/*"); do
+        if shellcheck --severity=warning "$f"; then echo "OK:   $f"
+        else echo "FAIL: $f"; failed=1; fi
+      done
+      exit $failed
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ── Unit tests ────────────────────────────────────────────────────────────────
+test:
+  stage: test
+  script:
+    - bash -n waydroid-toolkit.sh && echo "Syntax OK"
+    - bash waydroid-toolkit.sh --help || true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ── Integration (allowed to fail — needs Waydroid runtime) ────────────────────
+integration:
+  stage: test
+  allow_failure: true
+  script:
+    - echo "Integration tests require a Waydroid-capable runner — skipped in shared CI"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
