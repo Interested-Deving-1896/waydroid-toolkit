@@ -1,61 +1,61 @@
 [submodule "vendor/AuroraStore"]
 	path = vendor/AuroraStore
-	url = https://github.com/whyorean/AuroraStore
+	url = https://gitlab.com/openos-project/upstream-mirrors/AuroraStore
 [submodule "vendor/AuroraDroid"]
 	path = vendor/AuroraDroid
-	url = https://github.com/whyorean/AuroraDroid
+	url = https://gitlab.com/openos-project/upstream-mirrors/AuroraDroid
 [submodule "vendor/Warden"]
 	path = vendor/Warden
-	url = https://github.com/whyorean/Warden
+	url = https://gitlab.com/openos-project/upstream-mirrors/Warden
 [submodule "vendor/GPlayApi"]
 	path = vendor/GPlayApi
-	url = https://github.com/whyorean/GPlayApi
+	url = https://gitlab.com/openos-project/upstream-mirrors/GPlayApi
 [submodule "vendor/Authenticator"]
 	path = vendor/Authenticator
-	url = https://github.com/whyorean/Authenticator
+	url = https://gitlab.com/openos-project/upstream-mirrors/Authenticator
 [submodule "vendor/AASTokenGrabber"]
 	path = vendor/AASTokenGrabber
-	url = https://github.com/whyorean/AASTokenGrabber
+	url = https://gitlab.com/openos-project/upstream-mirrors/AASTokenGrabber
 [submodule "vendor/token-dispenser"]
 	path = vendor/token-dispenser
-	url = https://github.com/whyorean/token-dispenser
+	url = https://gitlab.com/openos-project/upstream-mirrors/token-dispenser
 [submodule "vendor/plexus"]
 	path = vendor/plexus
-	url = https://github.com/whyorean/plexus
+	url = https://gitlab.com/openos-project/upstream-mirrors/plexus
 [submodule "vendor/AuroraServices"]
 	path = vendor/AuroraServices
-	url = https://github.com/whyorean/AuroraServices
+	url = https://gitlab.com/openos-project/upstream-mirrors/AuroraServices
 [submodule "vendor/AuroraServices-Magisk"]
 	path = vendor/AuroraServices-Magisk
-	url = https://github.com/whyorean/AuroraServices-Magisk
+	url = https://gitlab.com/openos-project/upstream-mirrors/AuroraServices-Magisk
 [submodule "vendor/AuroraDispenser"]
 	path = vendor/AuroraDispenser
-	url = https://github.com/whyorean/AuroraDispenser
+	url = https://gitlab.com/openos-project/upstream-mirrors/AuroraDispenser
 [submodule "vendor/playstore-api-v2"]
 	path = vendor/playstore-api-v2
-	url = https://github.com/whyorean/playstore-api-v2
+	url = https://gitlab.com/openos-project/upstream-mirrors/playstore-api-v2
 [submodule "vendor/CoronaStats-Worldwide"]
 	path = vendor/CoronaStats-Worldwide
-	url = https://github.com/whyorean/CoronaStats-Worldwide
+	url = https://gitlab.com/openos-project/upstream-mirrors/CoronaStats-Worldwide
 [submodule "vendor/CoronaStats"]
 	path = vendor/CoronaStats
-	url = https://github.com/whyorean/CoronaStats
+	url = https://gitlab.com/openos-project/upstream-mirrors/CoronaStats
 [submodule "vendor/spark-kotlin"]
 	path = vendor/spark-kotlin
-	url = https://github.com/whyorean/spark-kotlin
+	url = https://gitlab.com/openos-project/upstream-mirrors/spark-kotlin
 [submodule "vendor/YalpStore"]
 	path = vendor/YalpStore
-	url = https://github.com/whyorean/YalpStore
+	url = https://gitlab.com/openos-project/upstream-mirrors/YalpStore
 [submodule "vendor/aurora-vcard-mapper"]
 	path = vendor/aurora-vcard-mapper
-	url = https://github.com/whyorean/aurora-vcard-mapper
+	url = https://gitlab.com/openos-project/upstream-mirrors/aurora-vcard-mapper
 [submodule "vendor/GitHub-Store"]
 	path = vendor/GitHub-Store
-	url = https://github.com/OpenHub-Store/GitHub-Store
+	url = https://gitlab.com/openos-project/upstream-mirrors/GitHub-Store
 [submodule "vendor/penguins-eggs"]
 	path = vendor/penguins-eggs
 	url = https://gitlab.com/OSPF1896/penguins-eggs
 	branch = all-features
 [submodule "vendor/wadb"]
 	path = vendor/wadb
-	url = https://github.com/GoogleChromeLabs/wadb
+	url = https://gitlab.com/openos-project/upstream-mirrors/wadb
