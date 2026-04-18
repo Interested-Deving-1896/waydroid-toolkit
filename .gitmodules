@@ -54,7 +54,7 @@
 	url = https://github.com/OpenHub-Store/GitHub-Store
 [submodule "vendor/penguins-eggs"]
 	path = vendor/penguins-eggs
-	url = https://github.com/Interested-Deving-1896/penguins-eggs
+	url = https://gitlab.com/OSPF1896/penguins-eggs
 	branch = all-features
 [submodule "vendor/wadb"]
 	path = vendor/wadb
