@@ -105,3 +105,15 @@ pytest tests/unit/
 ## License
 
 GPL-3.0 — consistent with Waydroid and the majority of the upstream projects this integrates.
+
+## Submodule URLs
+
+Submodule URLs were updated from GitHub to the GitLab mirrors at
+`https://gitlab.com/openos-project/upstream-mirrors`.
+
+If you have an existing clone, run:
+```bash
+git submodule sync
+git submodule update --init --recursive
+```
+
