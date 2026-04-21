@@ -14,7 +14,7 @@ from rich.console import Console
 
 console = Console()
 
-_GITHUB_REPO = "Interested-Deving-1896/waydroid-toolkit"
+_GITHUB_REPO = "OSPF1896/waydroid-toolkit"
 _GITHUB_API = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
 
 
