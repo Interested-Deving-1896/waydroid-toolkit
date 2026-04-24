@@ -36,3 +36,4 @@ MANIFEST
 -e 
 # MkDocs
 site/
+.npmrc
