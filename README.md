@@ -1,31 +1,29 @@
-# WayDroid Toolkit
+[update-readmes]   Mode: rewrite — migrating to template structure...
+# waydroid-toolkit
 
-Unified management suite for [Waydroid](https://github.com/waydroid/waydroid) — a container-based Android runtime for Linux.
+[![Built with Ona](https://ona.com/build-with-ona.svg)](https://app.ona.com/#https://github.com/Interested-Deving-1896/waydroid-toolkit)
 
-WayDroid Toolkit consolidates the fragmented ecosystem of Waydroid helper scripts, GUI managers, extension installers, and maintenance tools into a single project with a consistent CLI and GTK4 GUI.
+<!-- AI:start:what-it-does -->
+_Description pending._
+<!-- AI:end:what-it-does -->
 
-## Features
+## Architecture
 
-| Module | What it does |
-|---|---|
-| **Installer** | Installs Waydroid on Debian, Ubuntu, Fedora, Arch, openSUSE and runs `waydroid init` |
-| **Extensions** | Installs GApps, microG, Magisk, libhoudini, libndk into the overlay filesystem |
-| **Images** | Manages multiple system/vendor image profiles with per-profile data isolation |
-| **Packages** | Installs APKs from local files or URLs; manages F-Droid repos |
-| **Backup** | Creates and restores compressed archives of all Waydroid data directories |
-| **Performance** | Configures ZRAM, CPU governor, Turbo Boost, and GameMode for gaming |
-| **Maintenance** | Display settings, screenshots, screen recording, logcat, file transfer, debloat |
+<!-- AI:start:architecture -->
+_Architecture documentation pending._
+<!-- AI:end:architecture -->
 
-## Installation
+## Install
+
+<!-- Add installation instructions here. This section is yours — the AI will not modify it. -->
 
 ```bash
-pip install waydroid-toolkit          # CLI only
-pip install "waydroid-toolkit[gui]"   # CLI + GTK4 GUI
+git clone https://github.com/Interested-Deving-1896/waydroid-toolkit.git
+cd waydroid-toolkit
 ```
 
-System requirements for the GUI: `libgtk-4` and `libadwaita` ≥ 1.4.
-
 ## Usage
+
 
 ### CLI
 
@@ -53,67 +51,50 @@ wdt maintenance debloat
 waydroid-toolkit
 ```
 
-## Architecture
+## Configuration
+
+<!-- Document configuration options here. This section is yours — the AI will not modify it. -->
+
+## CI
+
+<!-- AI:start:ci -->
+_CI documentation pending._
+<!-- AI:end:ci -->
+
+## Mirror chain
+
+<!-- AI:start:mirror-chain -->
+This repo is maintained in [`Interested-Deving-1896/waydroid-toolkit`](https://github.com/Interested-Deving-1896/waydroid-toolkit) and mirrored through:
 
 ```
-src/waydroid_toolkit/
-├── core/           # Waydroid runtime interface, ADB, privilege helpers
-├── modules/
-│   ├── installer/  # Cross-distro package install + waydroid init
-│   ├── extensions/ # Plugin engine: GApps, microG, Magisk, ARM translation
-│   ├── images/     # Image profile manager
-│   ├── packages/   # APK install, F-Droid repo management
-│   ├── backup/     # Backup and restore
-│   ├── performance/# ZRAM, CPU governor, GameMode
-│   └── maintenance/# Display, ADB tools, debloat
-├── cli/            # Click-based CLI (wdt)
-├── gui/            # GTK4/Adwaita GUI (waydroid-toolkit)
-└── utils/          # Distro detection, networking, overlay helpers
+Interested-Deving-1896/waydroid-toolkit  ──►  OpenOS-Project-OSP/waydroid-toolkit  ──►  OpenOS-Project-Ecosystem-OOC/waydroid-toolkit
 ```
 
-The CLI and GUI are thin layers over the modules. All business logic lives in `modules/` and `core/`, making it straightforward to add new frontends (TUI, D-Bus service, etc.).
+Changes flow downstream automatically via the hourly mirror chain in
+[`fork-sync-all`](https://github.com/Interested-Deving-1896/fork-sync-all).
+Direct commits to OSP or OOC are detected and opened as PRs back to `Interested-Deving-1896`.
+<!-- AI:end:mirror-chain -->
 
-## Upstream Projects
+## Contributors
 
-WayDroid Toolkit integrates concepts and techniques from the following projects:
+<!-- AI:start:contributors -->
+_Contributors pending._
+<!-- AI:end:contributors -->
 
-| Project | Role in WayDroid Toolkit |
-|---|---|
-| [waydroid/waydroid](https://github.com/waydroid/waydroid) | Core runtime — not modified, called via CLI/DBus |
-| [casualsnek/waydroid_script](https://github.com/casualsnek/waydroid_script) | Extension install approach, overlay layout, asset URLs |
-| [waydroid-helper/waydroid-helper](https://github.com/waydroid-helper/waydroid-helper) | GTK4 GUI patterns, key mapper concept |
-| [Nigel1992/Waydroid-Advanced-Manager](https://github.com/Nigel1992/Waydroid-Advanced-Manager) | ADB tool set (screenshot, logcat, file transfer) |
-| [amir0zx/waydroid-image-sw](https://github.com/amir0zx/waydroid-image-sw) | Image profile switching with data isolation |
-| [berndhofer/waybak](https://github.com/berndhofer/waybak) | Backup/restore directory layout |
-| [lil-xhris/Waydroid-boost-](https://github.com/lil-xhris/Waydroid-boost-) | ZRAM + CPU governor tuning approach |
-| [waydroid/waydroid-linux_tools](https://github.com/waydroid/waydroid-linux_tools) | Debloater package list, Plymouth integration |
-| [waydroid/waydroid-package-manager](https://github.com/waydroid/waydroid-package-manager) | F-Droid repo management model |
-| [mistrmochov/WaydroidSU](https://github.com/mistrmochov/WaydroidSU) | Magisk lifecycle management |
-| [Amstel-DEV/ota](https://github.com/Amstel-DEV/ota) | OTA image manifest format |
-| [n1lby73/waydroid-installer](https://github.com/n1lby73/waydroid-installer) | Cross-distro install logic |
+## Origins
 
-## Development
+<!-- AI:start:origins -->
+_No dependency graph found. Run `generate-dep-graph.yml` to generate `dep-graph/origins.md`._
+<!-- AI:end:origins -->
 
-```bash
-git clone https://github.com/your-org/waydroid-toolkit
-cd waydroid-toolkit
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest tests/unit/
-```
+## Resources
+
+<!-- AI:start:resources -->
+_No additional resource files found._
+<!-- AI:end:resources -->
 
 ## License
 
-GPL-3.0 — consistent with Waydroid and the majority of the upstream projects this integrates.
-
-## Submodule URLs
-
-Submodule URLs were updated from GitHub to the GitLab mirrors at
-`https://gitlab.com/openos-project/upstream-mirrors`.
-
-If you have an existing clone, run:
-```bash
-git submodule sync
-git submodule update --init --recursive
-```
-
+<!-- AI:start:license -->
+<!-- License not detected — add a LICENSE file to this repo. -->
+<!-- AI:end:license -->
