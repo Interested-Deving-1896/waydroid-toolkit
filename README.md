@@ -84,13 +84,20 @@ _Contributors pending._
 ## Origins
 
 <!-- AI:start:origins -->
-_Original project — no upstream fork._
+
+Original project — unified management suite for Waydroid (Android in a Linux container).
+
+| Origin | Host | Fork in I-D-1896 |
+|--------|------|-----------------|
+| [waydroid/waydroid](https://github.com/waydroid/waydroid) | GitHub | ✅ |
 <!-- AI:end:origins -->
 
 ## Resources
 
 <!-- AI:start:resources -->
-_No additional resource files found._
+| File | Description |
+|---|---|
+| [dep-graph/origins.md](https://github.com/Interested-Deving-1896/waydroid-toolkit/blob/main/dep-graph/origins.md) | Dependency graph (Markdown table) |
 <!-- AI:end:resources -->
 
 ## License
